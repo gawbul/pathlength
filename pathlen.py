@@ -2,16 +2,11 @@
 	Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
 	Python rewrite by Stephen P Moss, 2012
 	http://about.me/gawbul
+	gawbul@gmail.com
 """
 
 __version__ = "0.29b"
 	
-# ToDo
-# 1) Implement graphical output
-# 2) Fix summarise_data output function
-# 3) Fix large negative value in output file one
-# 4) Integrate with R for chart production
-
 # import modules
 import os, re, sys, time # needed for os, system and regular expression specific functions
 from time import localtime, strftime # needed for time specific functions
@@ -37,7 +32,7 @@ def main():
 	# if not using an input file for the parameters you can set them manually as follows
 	# setup acanthephyra_eye as new SuperpositionEye object - with relevant parameters passed	
 	# using Acanthephyra pelagica measurments
-	# also test using Systellaspis debilis and Nephrops norvegicus
+	# see README file or GitHub for information on parameters
 	acanthephyra_eye = SuperpositionEye("acanthephyra", 127, 15.8, 2480, 22.5, 870, 1.34, 1.37, 1, 0.0) 
 
 	# run the model	
@@ -80,7 +75,7 @@ def usage():
 	print "\t-g or --graphics\tAllows the user to view realtime graphical output for\n\t\t\t\tthe program calculations (**not yet implemented**)."
 	print "\t-h or --help\t\tDisplays this usage information."
 	print "\t-v or --version\t\tDisplays the program version."
-	print "\n\tFor more information visit https://bitbucket.org/gawbul/pathlength/\n\tor email Steve Moss (gawbul@gmail.com)."
+	print "\n\tFor more information visit https://github.com/gawbul/pathlength/\n\tor email Steve Moss (gawbul@gmail.com)."
 	return
 
 # process the parameter input file
