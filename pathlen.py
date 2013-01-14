@@ -30,16 +30,16 @@ def main():
 		pass
 	
 	# if not using an input file for the parameters you can set them manually as follows
-	# setup acanthephyra_eye as new SuperpositionEye object - with relevant parameters passed	
-	# using Acanthephyra pelagica measurments
+	# setup nephrops_eye as new SuperpositionEye object - with relevant parameters passed	
+	# using Nephrops norvegicus flat lateral measurments
 	# see README file or GitHub for information on parameters
-	acanthephyra_eye = SuperpositionEye("acanthephyra", 127, 15.8, 2480, 22.5, 870, 1.34, 1.37, 1, 0.0) 
+	nephrops_eye = SuperpositionEye("nephropsfl", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
 
 	# run the model	
-	acanthephyra_eye.run_model(graphics_opt)
+	nephrops_eye.run_model(graphics_opt)
 	
 	# summarise the data
-	acanthephyra_eye.summarise_data()
+	nephrops_eye.summarise_data()
 
 # handle any program input options given at the command line
 def handle_options(optsargs):
