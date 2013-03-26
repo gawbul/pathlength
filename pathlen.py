@@ -13,19 +13,18 @@ from datetime import timedelta, date # needed for time specific functions
 import math # needed for math functions (self.pi, cos, sin, tan, atan)
 import getopt # needed to get options from command line
 import rpy2 # needed for plotting subroutines in R
+#import pygame # needed for graphics output *** not yet implemented ***
 
 # main handler subroutine
 def main():
-	# track how long it takes
-	start = time.time()
 	# check what the program arguments are and assign appropriate variables
 	opts_array = handle_options(sys.argv[1:])
-	input_file = opts_array
+	(input_file, graphicsopt) = opts_array
 	
 	# check whether the user provide an input filename
 	if input_file:
 		# process file
-		process_input_file(input_file)
+		process_input_file(input_file, graphicsopt)
 		sys.exit()
 	else:
 		# just continue with inline parameters below
@@ -33,17 +32,20 @@ def main():
 	
 	# show startup information
 	startup()
-	
+
+	# track how long it takes
+	start = time.time()
+		
 	# if not using an input file for the parameters you can set them manually as follows
 	# setup nephrops_eye as new SuperpositionEye object - with relevant parameters passed	
 	# using Nephrops norvegicus flat lateral measurments
 	# see README file or GitHub for information on parameters
 	print "Setting up new superposition eye object..."
-	nephrops_eye = SuperpositionEye("nephropsfl", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
+	nephrops_eye = SuperpositionEye("nephrops", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
 
 	# run the model
 	print "Running the ray tracing model (please wait)..."
-	nephrops_eye.run_model()
+	nephrops_eye.run_model(graphicsopt)
 	
 	# summarise the data
 	print "Outputting summary data..."
@@ -58,15 +60,22 @@ def main():
 def handle_options(optsargs):
 	# process using getopts
 	try:
-		(opts, args) = getopt.getopt(optsargs, "f:ghv", ["file=", "help", "version"])
+		(opts, args) = getopt.getopt(optsargs, "f:gchv", ["file=", "graphics", "citation", "help", "version"])
 	except getopt.GetoptError as err:
 		print str(err)
 		usage()
 		sys.exit(2)
 	filename = None
+	graphicsopt = False
 	for o, a in opts:
 		if o in ("-f", "--file"):
 			filename = a
+		elif o in ("-g", "--graphics"):
+			graphicsopt = True
+			sys.exit()
+		elif o in ("-c", "--citation"):
+			startup()
+			sys.exit()
 		elif o in ("-h", "--help"):
 			usage()
 			sys.exit()
@@ -76,7 +85,7 @@ def handle_options(optsargs):
 			sys.exit()
 		else:
 			assert False, "unhandled option"
-	return filename
+	return filename, graphicsopt
 
 # display startup information in the terminal
 def startup():
@@ -94,19 +103,24 @@ def startup():
 def usage():
 	print "The valid program options are:"
 	print "\t-f or --file\t\tAllows the user to provide a csv input file with sets\n\t\t\t\tof parameters for individual runs on individual lines."
+	print "\t-g or --graphics\tTurn graphics on or off. *** not yet implemented ***"
+	print "\t-c or --citation\tDisplays the citation information."
 	print "\t-h or --help\t\tDisplays this usage information."
 	print "\t-v or --version\t\tDisplays the program version."
 	print "\n\tFor more information visit https://github.com/gawbul/pathlength/\n\tor email Steve Moss (gawbul@gmail.com)."
 	return
 
 # process the parameter input file
-def process_input_file(filename, graphics_opt):
+def process_input_file(filename, graphicsflag):
 	# process the csv input file here
 	# first check the file exists and exist with error message if not
 	if not os.path.exists(filename):
 		print "Error: Filename \'%s\' does not exist" % filename
 		sys.exit()
-	
+
+	# track how long it takes
+	start = time.time()
+		
 	# file must exist, so open and parse
 	inputfile = open(filename, "r")
 	count = 1
@@ -128,16 +142,24 @@ def process_input_file(filename, graphics_opt):
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = parts
 		
 		# create an object
+		print "Setting up new superposition eye object..."		
 		eye_object_from_file = SuperpositionEye(str(sn), int(rl), float(rw), int(ed), float(fw), int(ad), float(cri), float(rri), int(bce), float(pra))
 
 		# run the model	
-		eye_object_from_file.run_model()
+		print "Running the ray tracing model (please wait)..."
+		eye_object_from_file.run_model(graphicsflag)
 	
 		# summarise the data
+		print "Outputting summary data..."
 		eye_object_from_file.summarise_data()
 		
 		# increment line count
 		count += 1
+
+	# how long did we take?
+	end = time.time()
+	took = end - start
+	print "\nFinished in %s seconds.\n" % timedelta(seconds=took)
 	return
 
 # setup superposition eye class
@@ -160,7 +182,7 @@ class SuperpositionEye():
 		# set files for output data
 		self.setup_files(sn) # passes species name to prepend output filenames
 
-		self.iteration_count = 0 # q = 0 in original
+		self.iteration_count = 1 # q = 0 in original
 		self.shielding_pigment_length = 0.0 # extent of shielding pigment set to zero
 
 		# check the blur circle extent isn't set to less than 1 otherwise we will get division by zero error
@@ -221,7 +243,7 @@ class SuperpositionEye():
 		
 		return
 																					
-	def run_model(self):
+	def run_model(self, graphicsflag):
 		# print start_time and write to debug file
 		start_time = time.time()
 		self.write_output(self.debug_file, "*******************\n%s\n" % date.fromtimestamp(start_time).strftime("%d/%m/%Y %H:%M:%S"))
@@ -255,8 +277,6 @@ class SuperpositionEye():
 						# *** call display graphics here ***
 						continue
 
-			#self.print_output(10, 10, "Tapetum: " + str(self.reflective_tapetum_length))
-			#self.print_output(11, 10, "Pigment: " + str(self.shielding_pigment_length))
 			self.current_facet += 1
 			self.rhabdom_radius = self.rhabdom_width / 2				
 			self.rhabdom_length = self.old_rhabdom_length
@@ -285,7 +305,7 @@ class SuperpositionEye():
 			if self.inter_ommatidial_angle < 15:
 				self.boa = (self.inter_ommatidial_angle * 0.9494) + 0.004667
 			if self.inter_ommatidial_angle > 60:
-				#self.print_output(12, 10, "*** UNREAL ANGLE AT CORNEA ***")
+				self.print_output("*** UNREAL ANGLE AT CORNEA ***")
 				self.write_output(self.outputfile_one, "UNREAL ANGLE AT CORNEA")
 
 			# light loss at cone due to angle of incidence
@@ -349,6 +369,7 @@ class SuperpositionEye():
 				output_tmp.append(self.aa[i])
 				self.aa[i] = 0
 			output_tmp.append(999)	
+			self.print_output("")
 			self.write_output(self.outputfile_two, output_tmp)
 			self.bx = 0
 
@@ -367,7 +388,6 @@ class SuperpositionEye():
 			else:
 				self.reflective_tapetum_length += self.increment_amount			
 
-				
 			# increment iteration count and output count to screen and 999 to the file
 			self.iteration_count += 1
 			self.write_output(self.outputfile_one, 999)
@@ -473,8 +493,8 @@ class SuperpositionEye():
 	def write_output(self, filename, data):
 		# open file for append and write data
 		filehandle = open(filename, 'a') # open file in append mode
-		if type(data) == '<type \'list\'>':
-			csv_data = ",".join(data)
+		if isinstance(data, list):
+			csv_data = ",".join(map(str, data))
 		else:
 			csv_data = str(data)
 		filehandle.write(csv_data + "\n") # write output_text string to file with new line character
@@ -482,7 +502,7 @@ class SuperpositionEye():
 		return
 
 	def print_output(self, text):
-		print "%d: %s" % (self.iteration_count, text)
+		print "%d: (T:%0.2f P:%0.2f) %s" % (self.iteration_count, self.reflective_tapetum_length, self.shielding_pigment_length, text)
 		return
 			
 	def reset_parameters(self):
@@ -553,8 +573,8 @@ class SuperpositionEye():
 					self.reflective_tapetum_length = float(line)
 				elif self.shielding_pigment_length == 0:
 					self.shielding_pigment_length = float(line)
-			elif re.match("^\[([0-9\.\,\s]+998)\]$", line) and line != "999":
-				text = re.sub("[\[+\]+\s+]", "", line)
+			elif re.match("^([0-9\.\,\s]+998)$", line) and line != "999":
+				text = re.sub("\s+", "", line)
 				parts = text.split(',')
 				for part in parts:
 					# check if end of line
@@ -623,12 +643,12 @@ class SuperpositionEye():
 				self.matrix_sens.append(int(self.sens / self.arem))
 				self.matrix_rhab.append(int(self.rhab * 100))
 				self.matrix_res.append(int(self.res * 200))
+				self.print_output("CC: %s DD: %s" % (str(self.cc), str(self.dd)))
+				self.iteration_count += 1
 				self.cc += 1		
 				if self.cc == 11:
 					self.dd += 1
 					self.cc = 0
-				#self.print_output(10, 10, "CC: " + str(self.cc))
-				#self.print_output(11, 10, "DD: " + str(self.dd))
 				self.rhabdoms[0] = 0
 				self.rhabdoms[-1] = 0
 				self.bx = 0
@@ -649,7 +669,7 @@ class SuperpositionEye():
 		# end of program
 		sys.stdout.write("\a") # beep	
 		sys.stdout.flush() # flush beep
-		#self.print_output(20, 10, "*** End of program ***")
+		self.print_output("*** End of program ***")
 		
 		return
 					
