@@ -5,7 +5,8 @@
 	gawbul@gmail.com
 """
 
-__version__ = "0.35b"
+__author__ = "Steve Moss"
+__version__ = "0.42b"
 	
 # import modules
 import os, sys, time, re # needed for os, system, time and regular expression specific functions
@@ -17,6 +18,7 @@ import rpy2 # needed for plotting subroutines in R
 
 # main handler subroutine
 def main():
+	"""Controls the main program flow."""
 	# check what the program arguments are and assign appropriate variables
 	opts_array = handle_options(sys.argv[1:])
 	(input_file, graphicsopt) = opts_array
@@ -58,6 +60,7 @@ def main():
 	
 # handle any program input options given at the command line
 def handle_options(optsargs):
+	"""Handles the input arguments to the program."""
 	# process using getopts
 	try:
 		(opts, args) = getopt.getopt(optsargs, "f:gchv", ["file=", "graphics", "citation", "help", "version"])
@@ -89,6 +92,7 @@ def handle_options(optsargs):
 
 # display startup information in the terminal
 def startup():
+	"""Displays information about the program on startup, or via the citation input argument."""
 	print "\nPathLength - Implements a ray tracing model to calculate resolution and sensitivity in reflective superposition compound eyes."
 	print "-" * len("PathLength - Implements a ray tracing model to calculate resolution and sensitivity in reflective superposition compound eyes.")
 	print "If you use this program, please cite:"
@@ -101,6 +105,7 @@ def startup():
 	
 # display usage information to the terminal
 def usage():
+	"""Displays usage information via the help input argument."""
 	print "The valid program options are:"
 	print "\t-f or --file\t\tAllows the user to provide a csv input file with sets\n\t\t\t\tof parameters for individual runs on individual lines."
 	print "\t-g or --graphics\tTurn graphics on or off. *** not yet implemented ***"
@@ -112,7 +117,7 @@ def usage():
 
 # process the parameter input file
 def process_input_file(filename, graphicsflag):
-	# process the csv input file here
+	"""Processes a csv input file for multiple parameter model testing."""
 	# first check the file exists and exist with error message if not
 	if not os.path.exists(filename):
 		print "Error: Filename \'%s\' does not exist" % filename
@@ -165,6 +170,7 @@ def process_input_file(filename, graphicsflag):
 # setup superposition eye class
 class SuperpositionEye():
 	def __init__(self, sn, rl, rw, ed, fw, ad, cri, rri, bce, pra):
+		"""Initialises the default variables of a new SuperpositionEye object."""
 		# store parameters incase needed in future
 		self.eye_parameters = [sn, rl, rw, ed, fw, ad, cri, rri, bce, pra]
 		
@@ -209,6 +215,7 @@ class SuperpositionEye():
 		self.row_total = 0 # total facets?
 						
 	def initial_calculations(self):
+		"""Does some initial calculations before running the main model."""
 		# do initial calculations
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = self.eye_parameters	# get stored parameters
 		
@@ -244,6 +251,7 @@ class SuperpositionEye():
 		return
 																					
 	def run_model(self, graphicsflag):
+		"""Main workhorse of the program. Runs the ray tracing model with the given parameters."""
 		# print start_time and write to debug file
 		start_time = time.time()
 		self.write_output(self.debug_file, "*******************\n%s\n" % date.fromtimestamp(start_time).strftime("%d/%m/%Y %H:%M:%S"))
@@ -465,6 +473,7 @@ class SuperpositionEye():
 		return
 		
 	def setup_files(self, sn):
+		"""Setup the filenames and remove old ones if they exist."""
 		# get current directory and build filenames
 		species_name = sn.lower() # always convert to lowercase
 		curr_dir = os.getcwd() # get current working directory
@@ -491,6 +500,7 @@ class SuperpositionEye():
 		return
 		
 	def write_output(self, filename, data):
+		"""Write data to an output filename."""
 		# open file for append and write data
 		filehandle = open(filename, 'a') # open file in append mode
 		if isinstance(data, list):
@@ -502,10 +512,12 @@ class SuperpositionEye():
 		return
 
 	def print_output(self, text):
+		"""Output text and progress information to the screen."""
 		print "%d: (T:%0.2f P:%0.2f) %s" % (self.iteration_count, self.reflective_tapetum_length, self.shielding_pigment_length, text)
 		return
 			
 	def reset_parameters(self):
+		"""Reset all the parameters to their default values."""
 		# get stored parameters
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = self.eye_parameters
 
@@ -522,6 +534,7 @@ class SuperpositionEye():
 		return
 		
 	def return_parameters(self):
+		"""Get the original parameters, as stored at the beginning of the program."""
 		# get stored parameters
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = self.eye_parameters
 		
@@ -529,6 +542,7 @@ class SuperpositionEye():
 		return rl, rw, ed, fw, ad, cri, rri, bce
 
 	def summarise_data(self):
+		"""Summarise the data produced by the calculations in the run_model function."""
 		# get stored parameters
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = self.eye_parameters
 		
@@ -672,7 +686,10 @@ class SuperpositionEye():
 		self.print_output("*** End of program ***")
 		
 		return
-					
+	def build_plots(self):
+		"""This function will produce publication quality plots from the output data."""
+		return
+						
 # check for main subroutine and call it
 if __name__ == "__main__":
 		sys.exit(main())
