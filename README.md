@@ -23,11 +23,11 @@ gawbul@gmail.com
 ***
 # 
 
-Run the program using (**N.B. Implemented using Python 2.7**):
+Run the program using (** N.B. Implemented using Python 2.7 **):
 
 	python pathlen.py
 
-** Use the following to check your python version**:
+** Use the following to check your python version **:
 
 	$ python -V
 	Python 2.7.3
@@ -94,7 +94,7 @@ Where the parameters equal:
 	18		=	Blur Circle Extent
 	0		=	Proximal Rhabdom Angle (used to create pointy-ended rhabdoms)
 
-**N.B.: The genus name is NOT case sensitive. It is always converted to lowercase to avoid file access issues.**
+** N.B.: The genus name is NOT case sensitive. It is always converted to lowercase to avoid file access issues. **
 
 Then you need to simply call the run_model method in order to execute the model.
 
@@ -103,7 +103,7 @@ Then you need to simply call the run_model method in order to execute the model.
 This outputs two files (where genus is the name you give when setting up the object):
 
 	genus_output_one.txt	=	Each record is separated by 999 in the text and contains the length of the reflective tapetum and shielding pigment initially, followed by the path length values for each rhabdom the light passes through, starting at the axial rhabdom.
-	genus_output_two.txt	=	**Description needed**
+	genus_output_two.txt	=	** Description needed **
 
 In order to summarise the data one is required to call the summarise_data method:
 
@@ -111,7 +111,7 @@ In order to summarise the data one is required to call the summarise_data method
 	
 This outputs three files (where genus is the name you give when setting up the object):
 
-	genus_summary_one.txt	= **Description needed**
+	genus_summary_one.txt	= ** Description needed **
 	genus_summary_res.txt	= Resolution output
 	genus_summary_sen.txt	= Sensitivity output
 
