@@ -16,18 +16,16 @@ http://about.me/gawbul
 gawbul@gmail.com
 
 # 
-***
 # 
 # Usage
 # 
-***
 # 
 
 Run the program using:
 
 	python pathlen.py
 
-**N.B. Implemented using Python 2.7**
+**N.B.: Implemented using Python 2.7**
 
 **Use the following to check your python version**:
 
@@ -105,7 +103,7 @@ Then you need to simply call the run_model method in order to execute the model.
 This outputs two files (where genus is the name you give when setting up the object):
 
 	genus_output_one.txt	=	Each record is separated by 999 in the text and contains the length of the reflective tapetum and shielding pigment initially, followed by the path length values for each rhabdom the light passes through, starting at the axial rhabdom.
-	genus_output_two.txt	=	** Description needed **
+	genus_output_two.txt	=	**Description needed**
 
 In order to summarise the data one is required to call the summarise_data method:
 
@@ -118,11 +116,9 @@ This outputs three files (where genus is the name you give when setting up the o
 	genus_summary_sen.txt	= Sensitivity output
 
 # 
-***
 # 
 # Command line options
 # 
-***
 # 
 
 The program allows you to input certain command line options when executing the program:
@@ -139,11 +135,11 @@ The options that are available currently are:
 
 These options have the following effects:
 
-	file	=	Allows the user to give a filename containing parameters in comma separated value format, with individual sets of parameters on separate lines. The program will parse each line of the file in turn, running the model for each set of parameters.
+	file		=	Allows the user to give a filename containing parameters in comma separated value format, with individual sets of parameters on separate lines. The program will parse each line of the file in turn, running the model for each set of parameters.
 	graphics	=	Allows the user to view graphical output. *** not yet implemented ***
 	citation	=	Allows the user to view the citation information.
-	help	=	Allows the user to view the usage information.
-	version	=	Allows the user to view the version of the program.
+	help		=	Allows the user to view the usage information.
+	version		=	Allows the user to view the version of the program.
 
 By providing an input file, you can implement a workflow, testing various different eye parameters and thus different hypotheses. The file should be in the following format and follows the same structure as using the object within the program, as shown above:
 
