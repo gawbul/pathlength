@@ -18,7 +18,7 @@ gawbul@gmail.com
 # 
 ***
 # 
-# USAGE
+# Usage
 # 
 ***
 # 
@@ -103,7 +103,6 @@ Then you need to simply call the run_model method in order to execute the model.
 This outputs two files (where genus is the name you give when setting up the object):
 
 	genus_output_one.txt	=	Each record is separated by 999 in the text and contains the length of the reflective tapetum and shielding pigment initially, followed by the path length values for each rhabdom the light passes through, starting at the axial rhabdom.
-	
 	genus_output_two.txt	=	**Description needed**
 
 In order to summarise the data one is required to call the summarise_data method:
