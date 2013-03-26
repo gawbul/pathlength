@@ -40,30 +40,42 @@ The default settings are located in the main function:
 	def main():
 		# check what the program arguments are and assign appropriate variables
 		opts_array = handle_options(sys.argv[1:])
-		input_file = opts_array
-		
+		(input_file, graphicsopt) = opts_array
+	
 		# check whether the user provide an input filename
 		if input_file:
 			# process file
-			process_input_file(input_file)
+			process_input_file(input_file, graphicsopt)
 			sys.exit()
 		else:
 			# just continue with inline parameters below
 			pass
+	
+		# show startup information
+		startup()
+
+		# track how long it takes
+		start = time.time()
 		
 		# if not using an input file for the parameters you can set them manually as follows
-		# setup acanthephyra_eye as new SuperpositionEye object - with relevant parameters passed	
-		# using Acanthephyra pelagica measurments
-		# also test using Systellaspis debilis and Nephrops norvegicus
-		acanthephyra_eye = SuperpositionEye("acanthephyra", 127, 15.8, 2480, 22.5, 870, 1.34, 1.37, 1, 0.0) 
+		# setup nephrops_eye as new SuperpositionEye object - with relevant parameters passed	
+		# using Nephrops norvegicus flat lateral measurments
+		# see README file or GitHub for information on parameters
+		print "Setting up new superposition eye object..."
+		nephrops_eye = SuperpositionEye("nephrops", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
 
-		# run the model	
-		acanthephyra_eye.run_model()
-		
+		# run the model
+		print "Running the ray tracing model (please wait)..."
+		nephrops_eye.run_model(graphicsopt)
+	
 		# summarise the data
-		acanthephyra_eye.summarise_data()
-
-
+		print "Outputting summary data..."
+		nephrops_eye.summarise_data()
+	
+		# how long did we take?
+		end = time.time()
+		took = end - start
+		print "\nFinished in %s seconds.\n" % timedelta(seconds=took)
 			
 To setup a new eye object you need to do the following before executing the program:
 
@@ -119,15 +131,18 @@ The program allows you to input certain command line options when executing the 
 The options that are available currently are:
 
 	f	=	file (also --file)
+	g	=	graphics (also --graphics)
+	c	=	citation (also --citation)
 	h	=	help (also --help)
 	v	=	version (also --version)
 
 These options have the following effects:
 
 	file	=	Allows the user to give a filename containing parameters in comma separated value format, with individual sets of parameters on separate lines. The program will parse each line of the file in turn, running the model for each set of parameters.
+	graphics	=	Allows the user to view graphical output. *** not yet implemented ***
+	citation	=	Allows the user to view the citation information.
 	help	=	Allows the user to view the usage information.
 	version	=	Allows the user to view the version of the program.
-
 
 By providing an input file, you can implement a workflow, testing various different eye parameters and thus different hypotheses. The file should be in the following format and follows the same structure as using the object within the program, as shown above:
 
