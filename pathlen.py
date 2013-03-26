@@ -1,62 +1,72 @@
 """	Superposition Eye Pathlength and Absorption Program
 	Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
-	Python rewrite by Stephen P Moss, 2012
+	Python rewrite by Stephen P Moss, 2012-2013
 	http://about.me/gawbul
 	gawbul@gmail.com
 """
 
-__version__ = "0.29b"
+__version__ = "0.35b"
 	
 # import modules
-import os, re, sys, time # needed for os, system and regular expression specific functions
-from time import localtime, strftime # needed for time specific functions
+import os, sys, time, re # needed for os, system, time and regular expression specific functions
+from datetime import timedelta, date # needed for time specific functions
 import math # needed for math functions (self.pi, cos, sin, tan, atan)
-import curses # needed to print to screen location
 import getopt # needed to get options from command line
+import rpy2 # needed for plotting subroutines in R
 
 # main handler subroutine
 def main():
+	# track how long it takes
+	start = time.time()
 	# check what the program arguments are and assign appropriate variables
 	opts_array = handle_options(sys.argv[1:])
-	input_file, graphics_opt = opts_array
+	input_file = opts_array
 	
 	# check whether the user provide an input filename
 	if input_file:
 		# process file
-		process_input_file(input_file, graphics_opt)
+		process_input_file(input_file)
 		sys.exit()
 	else:
 		# just continue with inline parameters below
 		pass
 	
+	# show startup information
+	startup()
+	
 	# if not using an input file for the parameters you can set them manually as follows
 	# setup nephrops_eye as new SuperpositionEye object - with relevant parameters passed	
 	# using Nephrops norvegicus flat lateral measurments
 	# see README file or GitHub for information on parameters
+	print "Setting up new superposition eye object..."
 	nephrops_eye = SuperpositionEye("nephropsfl", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
 
-	# run the model	
-	nephrops_eye.run_model(graphics_opt)
+	# run the model
+	print "Running the ray tracing model (please wait)..."
+	nephrops_eye.run_model()
 	
 	# summarise the data
+	print "Outputting summary data..."
 	nephrops_eye.summarise_data()
-
+	
+	# how long did we take?
+	end = time.time()
+	took = end - start
+	print "\nFinished in %s seconds.\n" % timedelta(seconds=took)
+	
 # handle any program input options given at the command line
 def handle_options(optsargs):
 	# process using getopts
 	try:
-		(opts, args) = getopt.getopt(optsargs, "f:ghv", ["file=", "graphics", "help", "version"])
+		(opts, args) = getopt.getopt(optsargs, "f:ghv", ["file=", "help", "version"])
 	except getopt.GetoptError as err:
 		print str(err)
 		usage()
 		sys.exit(2)
 	filename = None
-	graphics = 0
 	for o, a in opts:
 		if o in ("-f", "--file"):
 			filename = a
-		elif o in ("-g", "--graphics"):
-			graphics = 1
 		elif o in ("-h", "--help"):
 			usage()
 			sys.exit()
@@ -66,13 +76,24 @@ def handle_options(optsargs):
 			sys.exit()
 		else:
 			assert False, "unhandled option"
-	return filename, graphics
+	return filename
 
+# display startup information in the terminal
+def startup():
+	print "\nPathLength - Implements a ray tracing model to calculate resolution and sensitivity in reflective superposition compound eyes."
+	print "-" * len("PathLength - Implements a ray tracing model to calculate resolution and sensitivity in reflective superposition compound eyes.")
+	print "If you use this program, please cite:"
+	print "\nGaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Eyes of Nephrops Norvegicus: Optics, \n" \
+	"Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s).\n" \
+	"Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Press, 107:148."
+	print "-" * len("Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s).") + "\n"
+	
+	return
+	
 # display usage information to the terminal
 def usage():
 	print "The valid program options are:"
 	print "\t-f or --file\t\tAllows the user to provide a csv input file with sets\n\t\t\t\tof parameters for individual runs on individual lines."
-	print "\t-g or --graphics\tAllows the user to view realtime graphical output for\n\t\t\t\tthe program calculations (**not yet implemented**)."
 	print "\t-h or --help\t\tDisplays this usage information."
 	print "\t-v or --version\t\tDisplays the program version."
 	print "\n\tFor more information visit https://github.com/gawbul/pathlength/\n\tor email Steve Moss (gawbul@gmail.com)."
@@ -110,7 +131,7 @@ def process_input_file(filename, graphics_opt):
 		eye_object_from_file = SuperpositionEye(str(sn), int(rl), float(rw), int(ed), float(fw), int(ad), float(cri), float(rri), int(bce), float(pra))
 
 		# run the model	
-		eye_object_from_file.run_model(graphics_opt)
+		eye_object_from_file.run_model()
 	
 		# summarise the data
 		eye_object_from_file.summarise_data()
@@ -181,6 +202,7 @@ class SuperpositionEye():
 		self.num_facets = int(self.aperture_diameter / self.facet_width) # num of facets across aperture
 		self.rhabdom_radius = self.rhabdom_width / 2 # rhabdom radius
 		self.old_rhabdom_length = self.rhabdom_length # old rhabdom length
+		self.max_rhabdom_length = self.rhabdom_length # store rhabdom length for main loop
 		self.inter_ommatidial_angle = 0	# inter-ommatidial angle
 		self.current_facet = 0 # current facet
 
@@ -199,19 +221,16 @@ class SuperpositionEye():
 		
 		return
 																					
-	def run_model(self, gfx_flag):
+	def run_model(self):
 		# print start_time and write to debug file
-		start_time = strftime("%d/%m/%Y %H:%M:%S", localtime())
-		self.write_output(self.debug_file, "*******************\n%s\n" % start_time)
-
-		# initialise curses window object - this allows us to print to locations on the screen
-		self.window = curses.initscr()	
-
+		start_time = time.time()
+		self.write_output(self.debug_file, "*******************\n%s\n" % date.fromtimestamp(start_time).strftime("%d/%m/%Y %H:%M:%S"))
+		
 		# do the initial calculations
 		self.initial_calculations()
 		
 		# main program loop	
-		while self.shielding_pigment_length <= (0.95 * self.old_rhabdom_length):
+		while True:
 			# calculate prox-dist length of first pass
 			if self.boa > self.critical_angle and self.boa < 25 and self.cz == 0:
 				# change shape of proximal portion of the rhabdom
@@ -235,13 +254,9 @@ class SuperpositionEye():
 					else:
 						# *** call display graphics here ***
 						continue
-		
-			# set parameters for next incident facet
-			if gfx_flag == 1:
-				# *** call display graphics here ***
-				pass
-			self.print_output(10, 10, "Tapetum: " + str(self.reflective_tapetum_length))
-			self.print_output(11, 10, "Pigment: " + str(self.shielding_pigment_length))
+
+			#self.print_output(10, 10, "Tapetum: " + str(self.reflective_tapetum_length))
+			#self.print_output(11, 10, "Pigment: " + str(self.shielding_pigment_length))
 			self.current_facet += 1
 			self.rhabdom_radius = self.rhabdom_width / 2				
 			self.rhabdom_length = self.old_rhabdom_length
@@ -270,7 +285,7 @@ class SuperpositionEye():
 			if self.inter_ommatidial_angle < 15:
 				self.boa = (self.inter_ommatidial_angle * 0.9494) + 0.004667
 			if self.inter_ommatidial_angle > 60:
-				self.print_output(12, 10, "*** UNREAL ANGLE AT CORNEA ***")
+				#self.print_output(12, 10, "*** UNREAL ANGLE AT CORNEA ***")
 				self.write_output(self.outputfile_one, "UNREAL ANGLE AT CORNEA")
 
 			# light loss at cone due to angle of incidence
@@ -338,24 +353,23 @@ class SuperpositionEye():
 			self.bx = 0
 
 			# reset tapetum to zero and increase pigment by 10%
-			if self.reflective_tapetum_length >= (0.95 * self.rhabdom_length):
-				self.reflective_tapetum_length = 0
-				self.shielding_pigment_length += self.increment_amount
-			else:
-				self.reflective_tapetum_length += self.increment_amount
-			if self.shielding_pigment_length >= (0.95 * self.rhabdom_length):
+			if self.reflective_tapetum_length >= self.max_rhabdom_length and self.shielding_pigment_length >= self.max_rhabdom_length:
 				# increment iteration count and output count to screen and 999 to the file
 				self.iteration_count += 1
-				self.print_output(9, 10, self.iteration_count)
 				self.write_output(self.outputfile_one, 999)
 				# end of program
 				sys.stdout.write("\a") # beep	
 				sys.stdout.flush() # flush beep
 				break
+			elif self.reflective_tapetum_length >= self.max_rhabdom_length and self.shielding_pigment_length < self.max_rhabdom_length:
+				self.reflective_tapetum_length = 0
+				self.shielding_pigment_length += self.increment_amount
+			else:
+				self.reflective_tapetum_length += self.increment_amount			
+
 				
 			# increment iteration count and output count to screen and 999 to the file
 			self.iteration_count += 1
-			self.print_output(9, 10, self.iteration_count)
 			self.write_output(self.outputfile_one, 999)
 			
 			# reset output data
@@ -365,9 +379,8 @@ class SuperpositionEye():
 			self.reset_parameters()
 			
 		# print end_time
-		end_time = strftime("%d/%m/%Y %H:%M:%S", localtime())
-		self.write_output(self.debug_file, "\n%s\n*******************" % end_time)
-		time.sleep(5)
+		end_time = time.time()
+		self.write_output(self.debug_file, "\n%s\n*******************" % date.fromtimestamp(end_time).strftime("%d/%m/%Y %H:%M:%S"))
 		
 	def case_one(self):
 		# no reflection - light passes through rhabdom
@@ -408,7 +421,7 @@ class SuperpositionEye():
 			self.x = self.rhabdom_length / math.cos(self.boa * self.conv)
 		if self.x > self.old_rhabdom_length:
 			self.v = self.x
-		if self.x	< self.old_rhabdom_length:
+		if self.x < self.old_rhabdom_length:
 			self.v = self.old_rhabdom_length
 		
 		if self.reflective_tapetum_length == 0:
@@ -460,21 +473,18 @@ class SuperpositionEye():
 	def write_output(self, filename, data):
 		# open file for append and write data
 		filehandle = open(filename, 'a') # open file in append mode
-		filehandle.write(str(data) + "\n") # write output_text string to file with new line character
+		if type(data) == '<type \'list\'>':
+			csv_data = ",".join(data)
+		else:
+			csv_data = str(data)
+		filehandle.write(csv_data + "\n") # write output_text string to file with new line character
 		filehandle.close() # close file
 		return
-		
-	def print_output(self, x, y, text):
-		# print text to the screen - takes over from pospr, postxt and tappig subs
-		# uses curses to print to specific screen location
-		self.window.addstr(x, y, str(text))
-		self.window.refresh()
+
+	def print_output(self, text):
+		print "%d: %s" % (self.iteration_count, text)
 		return
-		
-	def draw_graphics(self):
-		# draw line model of ommatidia and POLs/path lengths
-		return
-	
+			
 	def reset_parameters(self):
 		# get stored parameters
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = self.eye_parameters
@@ -501,9 +511,6 @@ class SuperpositionEye():
 	def summarise_data(self):
 		# get stored parameters
 		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = self.eye_parameters
-		
-		# refresh curses window
-		self.window.clear()
 		
 		# set required parameters
 		self.facet_width = fw
@@ -620,8 +627,8 @@ class SuperpositionEye():
 				if self.cc == 11:
 					self.dd += 1
 					self.cc = 0
-				self.print_output(10, 10, "CC: " + str(self.cc))
-				self.print_output(11, 10, "DD: " + str(self.dd))
+				#self.print_output(10, 10, "CC: " + str(self.cc))
+				#self.print_output(11, 10, "DD: " + str(self.dd))
 				self.rhabdoms[0] = 0
 				self.rhabdoms[-1] = 0
 				self.bx = 0
@@ -642,11 +649,8 @@ class SuperpositionEye():
 		# end of program
 		sys.stdout.write("\a") # beep	
 		sys.stdout.flush() # flush beep
-		self.print_output(20, 10, "*** End of program ***")
-		time.sleep(5)
+		#self.print_output(20, 10, "*** End of program ***")
 		
-		# end curses session
-		curses.endwin()
 		return
 					
 # check for main subroutine and call it

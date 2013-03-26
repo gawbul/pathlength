@@ -9,7 +9,7 @@ A program implementing a ray tracing model to determine the interactions of vari
 
 Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
 
-Python rewrite by Stephen P Moss, 2012
+Python rewrite by Stephen P Moss, 2012-2013
 
 http://about.me/gawbul
 
@@ -40,12 +40,12 @@ The default settings are located in the main function:
 	def main():
 		# check what the program arguments are and assign appropriate variables
 		opts_array = handle_options(sys.argv[1:])
-		input_file, graphics_opt = opts_array
+		input_file = opts_array
 		
 		# check whether the user provide an input filename
 		if input_file:
 			# process file
-			process_input_file(input_file, graphics_opt)
+			process_input_file(input_file)
 			sys.exit()
 		else:
 			# just continue with inline parameters below
@@ -58,7 +58,7 @@ The default settings are located in the main function:
 		acanthephyra_eye = SuperpositionEye("acanthephyra", 127, 15.8, 2480, 22.5, 870, 1.34, 1.37, 1, 0.0) 
 
 		# run the model	
-		acanthephyra_eye.run_model(graphics_opt)
+		acanthephyra_eye.run_model()
 		
 		# summarise the data
 		acanthephyra_eye.summarise_data()
@@ -119,14 +119,12 @@ The program allows you to input certain command line options when executing the 
 The options that are available currently are:
 
 	f	=	file (also --file)
-	g	=	graphics (also --graphics)
 	h	=	help (also --help)
 	v	=	version (also --version)
 
 These options have the following effects:
 
 	file	=	Allows the user to give a filename containing parameters in comma separated value format, with individual sets of parameters on separate lines. The program will parse each line of the file in turn, running the model for each set of parameters.
-	graphics =	Allows the user to view a realtime visual representation of the parameters being calculated (**currently not implemented**).
 	help	=	Allows the user to view the usage information.
 	version	=	Allows the user to view the version of the program.
 
