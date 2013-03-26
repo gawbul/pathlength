@@ -468,11 +468,11 @@ class SuperpositionEye():
 		# get current directory and build filenames
 		species_name = sn.lower() # always convert to lowercase
 		curr_dir = os.getcwd() # get current working directory
-		self.outputfile_one = os.path.join(curr_dir, species_name + '_output_one.txt') # outputfile one
-		self.outputfile_two = os.path.join(curr_dir, species_name + '_output_two.txt') # outputfile two
-		self.matrixfile_one = os.path.join(curr_dir, species_name + '_summary_one.txt') # matrixfile one
-		self.matrixfile_two = os.path.join(curr_dir, species_name + '_summary_res.txt') # matrixfile two
-		self.matrixfile_three = os.path.join(curr_dir, species_name + '_summary_sen.txt') # matrixfile three
+		self.outputfile_one = os.path.join(curr_dir, species_name + '_output_one.csv') # outputfile one
+		self.outputfile_two = os.path.join(curr_dir, species_name + '_output_two.csv') # outputfile two
+		self.matrixfile_one = os.path.join(curr_dir, species_name + '_summary_one.csv') # matrixfile one
+		self.matrixfile_two = os.path.join(curr_dir, species_name + '_summary_res.csv') # matrixfile two
+		self.matrixfile_three = os.path.join(curr_dir, species_name + '_summary_sen.csv') # matrixfile three
 		self.debug_file = os.path.join(curr_dir, species_name + '_debug.txt') # debug file
 	
 		# check if files exist and delete them
