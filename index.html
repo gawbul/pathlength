@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Pathlength : A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of POLs through a reflecting superposition compound eye." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Pathlength</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/gawbul/pathlength">View on GitHub</a>
+
+          <h1 id="project_title">Pathlength</h1>
+          <h2 id="project_tagline">A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of POLs through a reflecting superposition compound eye.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/gawbul/pathlength/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/gawbul/pathlength/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <hr><h1><strong>Superposition Eye Path-length Program</strong></h1>
+
+<hr><p>A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on path's of POLs through reflecting superposition compound eye.</p>
+
+<p>Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995</p>
+
+<p>Python rewrite by Stephen P Moss, 2012-2013</p>
+
+<p><a href="http://about.me/gawbul">http://about.me/gawbul</a></p>
+
+<p><a href="mailto:gawbul@gmail.com">gawbul@gmail.com</a></p>
+
+<h1>Usage</h1>
+
+<p>Run the program using:</p>
+
+<pre><code>python pathlen.py
+</code></pre>
+
+<p><strong>N.B.: Implemented using Python 2.7</strong></p>
+
+<p><strong>Use the following to check your python version</strong>:</p>
+
+<pre><code>$ python -V
+Python 2.7.3
+</code></pre>
+
+<p>If you have a version less than 2.7, you can get the latest python version for your system from <a href="http://www.python.org/">http://www.python.org/</a>.</p>
+
+<p>The default settings are located in the main function:</p>
+
+<pre><code># main handler subroutine
+def main():
+    # check what the program arguments are and assign appropriate variables
+    opts_array = handle_options(sys.argv[1:])
+    (input_file, graphicsopt) = opts_array
+
+    # check whether the user provide an input filename
+    if input_file:
+        # process file
+        process_input_file(input_file, graphicsopt)
+        sys.exit()
+    else:
+        # just continue with inline parameters below
+        pass
+
+    # show startup information
+    startup()
+
+    # track how long it takes
+    start = time.time()
+
+    # if not using an input file for the parameters you can set them manually as follows
+    # setup nephrops_eye as new SuperpositionEye object - with relevant parameters passed   
+    # using Nephrops norvegicus flat lateral measurments
+    # see README file or GitHub for information on parameters
+    print "Setting up new superposition eye object..."
+    nephrops_eye = SuperpositionEye("nephrops", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
+
+    # run the model
+    print "Running the ray tracing model (please wait)..."
+    nephrops_eye.run_model(graphicsopt)
+
+    # summarise the data
+    print "Outputting summary data..."
+    nephrops_eye.summarise_data()
+
+    # how long did we take?
+    end = time.time()
+    took = end - start
+    print "\nFinished in %s seconds.\n" % timedelta(seconds=took)
+</code></pre>
+
+<p>To setup a new eye object you need to do the following before executing the program:</p>
+
+<pre><code>eye_object = SuperpositionEye("genus", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
+</code></pre>
+
+<p>Where the parameters equal:</p>
+
+<pre><code>"genus" =   A prefix for the output filenames e.g. organism genus name
+180     =   Rhabdom Length
+25  =   Rhabdom Width
+7800    =   Eye Diameter
+50  =   Facet Width
+3200        =   Aperture Diameter
+1.34    =   Cytoplasm Refractive Index
+1.37    =   Rhabdom Refractive Index
+18      =   Blur Circle Extent
+0       =   Proximal Rhabdom Angle (used to create pointy-ended rhabdoms)
+</code></pre>
+
+<p><strong>N.B.: The genus name is NOT case sensitive. It is always converted to lowercase to avoid file access issues.</strong></p>
+
+<p>Then you need to simply call the run_model method in order to execute the model.</p>
+
+<pre><code>eye_object.run_model()
+</code></pre>
+
+<p>This outputs two files (where genus is the name you give when setting up the object):</p>
+
+<pre><code>genus_output_one.txt    =   Each record is separated by 999 in the text and contains the length of the reflective tapetum and shielding pigment initially, followed by the path length values for each rhabdom the light passes through, starting at the axial rhabdom.
+genus_output_two.txt    =   **Description needed**
+</code></pre>
+
+<p>In order to summarise the data one is required to call the summarise_data method:</p>
+
+<pre><code>eye_object.summarise_data()
+</code></pre>
+
+<p>This outputs three files (where genus is the name you give when setting up the object):</p>
+
+<pre><code>genus_summary_one.txt   = **Description needed**
+genus_summary_res.txt   = Resolution output
+genus_summary_sen.txt   = Sensitivity output
+</code></pre>
+
+<h1>Command line options</h1>
+
+<p>The program allows you to input certain command line options when executing the program:</p>
+
+<pre><code>e.g. python pathlen.py -v
+</code></pre>
+
+<p>The options that are available currently are:</p>
+
+<pre><code>f   =   file (also --file)
+g   =   graphics (also --graphics)
+c   =   citation (also --citation)
+h   =   help (also --help)
+v   =   version (also --version)
+</code></pre>
+
+<p>These options have the following effects:</p>
+
+<pre><code>file        =   Allows the user to give a filename containing parameters in comma separated value format, with individual sets of parameters on separate lines. The program will parse each line of the file in turn, running the model for each set of parameters.
+graphics    =   Allows the user to view graphical output. *** not yet implemented ***
+citation    =   Allows the user to view the citation information.
+help        =   Allows the user to view the usage information.
+version     =   Allows the user to view the version of the program.
+</code></pre>
+
+<p>By providing an input file, you can implement a workflow, testing various different eye parameters and thus different hypotheses. The file should be in the following format and follows the same structure as using the object within the program, as shown above:</p>
+
+<pre><code>nephropsfl,180,25,7800,50,3200,1.34,1.37,18,0
+nephropspl,180,25,7800,50,3200,1.34,1.37,18,12.5
+nephropsfa,180,25,6760,50,3060,1.34,1.37,10,0
+nephropspa,180,25,6760,50,3060,1.34,1.37,10,12.5
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Pathlength maintained by <a href="https://github.com/gawbul">gawbul</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
