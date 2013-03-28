@@ -5,7 +5,7 @@
 ***
 # 
 
-A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on path's of POLs through reflecting superposition compound eye.
+A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of POLs through a reflecting superposition compound eye.
 
 Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
 
@@ -23,7 +23,7 @@ gawbul@gmail.com
 
 Run the program using:
 
-	python pathlen.py
+	python pathlength.py
 
 **N.B.: Implemented using Python 2.7**
 
@@ -123,7 +123,7 @@ This outputs three files (where genus is the name you give when setting up the o
 
 The program allows you to input certain command line options when executing the program:
 
-	e.g. python pathlen.py -v
+	e.g. python pathlength.py -v
 
 The options that are available currently are:
 
