@@ -1,0 +1,2573 @@
+%!PS-Adobe-3.0
+%%Title: pathlength.py
+%%For: Steve Moss
+%%Creator: a2ps version 4.14
+%%CreationDate: Tue Apr  2 11:59:33 2013
+%%BoundingBox: 24 24 571 818
+%%DocumentData: Clean7Bit
+%%Orientation: Landscape
+%%Pages: 7
+%%PageOrder: Ascend
+%%DocumentMedia: A4 595 842 0 () ()
+%%DocumentNeededResources: font Courier
+%%+ font Courier-Bold
+%%+ font Helvetica
+%%+ font Helvetica-Bold
+%%+ font Symbol
+%%+ font Times-Bold
+%%+ font Times-Roman
+%%DocumentProcessColors: Black Blue Green Red 
+%%DocumentSuppliedResources: procset a2ps-color-prolog
+%%+ encoding ISO-8859-1Encoding
+%%EndComments
+/a2psdict 200 dict def
+a2psdict begin
+%%BeginProlog
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+
+% EPSF import as in the Red Book
+/BeginInclude {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack 
+  userdict begin
+    0 setgray 0 setlinecap
+    1 setlinewidth 0 setlinejoin
+    10 setmiterlimit [ ] 0 setdash newpath
+    gs_languagelevel 1 ne {
+      false setstrokeadjust false setoverprint 
+    } if
+} bind def
+
+/EndInclude {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+/BeginEPSF {
+  BeginInclude
+  /showpage { } def
+} bind def
+
+/EndEPSF {
+  EndInclude
+} bind def
+
+% Page prefeed
+/page_prefeed {         % bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} bind def
+
+/deffont {
+  findfont exch scalefont def
+} bind def
+
+/reencode_font {
+  findfont reencode 2 copy definefont pop def
+} bind def
+
+% Function c-show (str => -)
+% centers text only according to x axis.
+/c-show { 
+  dup stringwidth pop
+  2 div neg 0 rmoveto
+  show
+} bind def
+
+% Function l-show (str => -)
+% prints texts so that it ends at currentpoint
+/l-show {
+  dup stringwidth pop neg 
+  0 
+  rmoveto show
+} bind def
+
+% center-fit show (str w => -)
+% show centered, and scale currentfont so that the width is less than w
+/cfshow {
+  exch dup stringwidth pop
+  % If the title is too big, try to make it smaller
+  3 2 roll 2 copy
+  gt
+  { % if, i.e. too big
+    exch div
+    currentfont exch scalefont setfont
+  } { % ifelse
+    pop pop 
+  }
+  ifelse
+  c-show			% center title
+} bind def
+
+% Return the y size of the current font
+% - => fontsize
+/currentfontsize {
+  currentfont /FontMatrix get 3 get 1000 mul
+} bind def
+
+% reencode the font
+% <encoding-vector> <fontdict> -> <newfontdict>
+/reencode { %def
+  dup length 5 add dict begin
+    { %forall
+      % <vector> <key> <val>
+      1 index /FID ne 
+      { def }{ pop pop } ifelse
+    } forall
+    /Encoding exch def % -
+
+    % Use the font's bounding box to determine the ascent, descent,
+    % and overall height; don't forget that these values have to be
+    % transformed using the font's matrix.
+    % We use `load' because sometimes BBox is executable, sometimes not.
+    % Since we need 4 numbers an not an array avoid BBox from being executed
+    /FontBBox load aload pop
+    FontMatrix transform /Ascent exch def pop
+    FontMatrix transform /Descent exch def pop
+    /FontHeight Ascent Descent sub def
+
+    % Get the underline position and thickness if they're defined.
+    % Use 1 if they are not defined.
+    currentdict /FontInfo 2 copy known
+    { get
+      /UnderlinePosition 2 copy % <FontInfo> /UP <FontInfo> /UP
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+
+      /UnderlineThickness 2 copy % <FontInfo> /UT <FontInfo> /UT
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+      pop % -
+    }{ pop pop
+    } ifelse
+
+    currentdict
+  end 
+} bind def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul neg 2 div 0 rmoveto
+    f# setfont
+    c-show
+  grestore
+} bind def
+
+% -------- Some routines to enlight plain b/w printings ---------
+
+% Underline
+% width --
+/dounderline {
+  currentpoint
+  gsave
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    0 rlineto
+    stroke
+  grestore
+} bind def
+
+% Underline a string
+% string --
+/dounderlinestring {
+  stringwidth pop
+  dounderline
+} bind def
+
+/UL {
+  /ul exch store
+} bind def
+
+% Draw a box of WIDTH wrt current font
+% width --
+/dobox {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    stroke
+  grestore
+} bind def
+
+/BX {
+  /bx exch store
+} bind def
+
+% Box a string
+% string --
+/doboxstring {
+  stringwidth pop
+  dobox
+} bind def
+
+%
+% ------------- Color routines ---------------
+%
+/FG /setrgbcolor load def
+
+% Draw the background
+% width --
+/dobackground {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    bgcolor aload pop setrgbcolor
+    fill
+  grestore
+} bind def
+
+% Draw bg for a string
+% string --
+/dobackgroundstring {
+  stringwidth pop
+  dobackground
+} bind def
+
+
+/BG {
+  dup /bg exch store
+  { mark 4 1 roll ] /bgcolor exch store } if
+} bind def
+
+
+/Show {
+  bg { dup dobackgroundstring } if
+  ul { dup dounderlinestring } if
+  bx { dup doboxstring } if
+  show
+} bind def
+
+% Function T(ab), jumps to the n-th tabulation in the current line
+/T {
+  cw mul x0 add
+  bg { dup currentpoint pop sub dobackground } if
+  ul { dup currentpoint pop sub dounderline } if
+  bx { dup currentpoint pop sub dobox } if
+  y0 moveto
+} bind def
+
+% Function n: move to the next line
+/n {
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+% Function N: show and move to the next line
+/N {
+  Show
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+/S {
+  Show
+} bind def
+
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Function title: prints page header.
+% <ct> <rt> <lt> are passed as argument
+/title { 
+  % 1. Draw the background
+  x v get y v get moveto
+  0 setgray
+  gsave
+    0 th 2 div neg rmoveto 
+    th setlinewidth
+    0.5 0.5 1 setrgbcolor
+    pw 0 rlineto stroke
+  grestore
+  % 2. Border it
+  gsave
+    0.7 setlinewidth
+    pw 0 rlineto
+    0 th neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+  % stk: ct rt lt
+  x v get y v get th sub 1 add moveto
+%%IncludeResource: font Helvetica
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  % 3. The left title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    fnfs 0.8 mul hm rmoveto
+    show			% left title
+  grestore
+  exch
+  % stk: ct ltw rt
+  % 4. the right title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    dup
+    pw exch stringwidth pop fnfs 0.8 mul add sub
+    hm
+    rmoveto
+    show			% right title
+  grestore
+  % stk: ct ltw rtw
+  % 5. the center title
+  gsave
+    pw 3 1 roll
+    % stk: ct pw ltw rtw
+    3 copy 
+    % Move to the center of the left room
+    sub add 2 div hm rmoveto
+    % What is the available space in here?
+    add sub fnfs 0.8 mul sub fnfs 0.8 mul sub
+    % stk: ct space_left
+%%IncludeResource: font Helvetica-Bold
+  fHelvetica-Bold fnfs scalefont setfont
+    1 setgray
+    cfshow
+  grestore
+} bind def
+
+% Function border: prints virtual page border
+/border { %def
+  gsave				% print four sides
+    0 setgray
+    x v get y v get moveto
+    0.7 setlinewidth		% of the square
+    pw 0 rlineto
+    0 ph neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+} bind def
+
+% Function water: prints a water mark in background
+/water { %def
+  gsave
+    scx scy moveto rotate
+%%IncludeResource: font Times-Bold
+  fTimes-Bold 100 scalefont setfont
+    .97 setgray
+    dup stringwidth pop 2 div neg -50 rmoveto
+    show
+  grestore
+} bind def
+
+% Function rhead: prints the right header
+/rhead {  %def
+  lx ly moveto
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  l-show
+} bind def
+
+% Function footer (cf rf lf -> -)
+/footer {
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  dx dy moveto
+  show
+
+  snx sny moveto
+  l-show
+  
+  fnx fny moveto
+  c-show
+} bind def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul neg 2 div 0 rmoveto
+    f# setfont
+    c-show
+  grestore
+} bind def
+%%BeginResource: procset a2ps-color-prolog 2.0 1
+
+%% Definition of the color faces.
+/p {
+  0 0 0 FG
+  false BG
+  false UL
+  false BX
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/sy {
+  0 0 0 FG
+  false BG
+  fSymbol bfs scalefont setfont
+  Show
+} bind def
+
+/k {
+  false BG
+  false UL
+  false BX
+  0 0 0.9 FG
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/K {
+  false BG
+  false UL
+  false BX
+  0 0 0.8 FG
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/c {
+  false BG
+  false UL
+  false BX
+  0.8 0 0 FG
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/C {
+  false BG
+  false UL
+  false BX
+  0.8 0 0 FG
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/l {
+  0 0 0 FG
+  0.8 0.8 0 true BG
+  false UL
+  false BX
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/L {
+  0 0 0 FG
+  1 1 0 true BG
+  false UL
+  false BX
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/str {
+  false BG
+  false UL
+  false BX
+  0 0.5 0 FG
+  fTimes-Roman bfs scalefont setfont
+  Show
+} bind def
+
+/e{
+  1 0 0 true BG
+  false UL
+  true BX
+  1 1 1 FG
+  fHelvetica-Bold bfs scalefont setfont
+  Show
+} bind def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul 2 div neg 0 rmoveto
+    f# setfont
+    0.8 0.1 0.1 FG
+    c-show
+  grestore
+} bind def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Symbol
+%%BeginResource: encoding ISO-8859-1Encoding
+/ISO-8859-1Encoding [
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright 
+/parenleft /parenright /asterisk /plus /comma /minus /period /slash 
+/zero /one /two /three /four /five /six /seven 
+/eight /nine /colon /semicolon /less /equal /greater /question 
+/at /A /B /C /D /E /F /G 
+/H /I /J /K /L /M /N /O 
+/P /Q /R /S /T /U /V /W 
+/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore 
+/quoteleft /a /b /c /d /e /f /g 
+/h /i /j /k /l /m /n /o 
+/p /q /r /s /t /u /v /w 
+/x /y /z /braceleft /bar /braceright /asciitilde /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclamdown /cent /sterling /currency /yen /brokenbar /section 
+/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron 
+/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /bullet 
+/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown 
+/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla 
+/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis 
+/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply 
+/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls 
+/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla 
+/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis 
+/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide 
+/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis 
+] def
+%%EndResource
+% Initialize page description variables.
+/sh 595 def
+/sw 842 def
+/llx 24 def
+/urx 818 def
+/ury 571 def
+/lly 24 def
+/#copies 1 def
+/th 15.000000 def
+/fnfs 11 def
+/bfs 7.542439 def
+/cw 4.525463 def
+
+% Dictionary for ISO-8859-1 support
+/iso1dict 6 dict begin
+  /fCourier ISO-8859-1Encoding /Courier reencode_font
+  /fCourier-Bold ISO-8859-1Encoding /Courier-Bold reencode_font
+  /fHelvetica ISO-8859-1Encoding /Helvetica reencode_font
+  /fHelvetica-Bold ISO-8859-1Encoding /Helvetica-Bold reencode_font
+  /fTimes-Bold ISO-8859-1Encoding /Times-Bold reencode_font
+  /fTimes-Roman ISO-8859-1Encoding /Times-Roman reencode_font
+currentdict end def
+/bgcolor [ 0 0 0 ] def
+/bg false def
+/ul false def
+/bx false def
+% The font for line numbering
+/f# /Helvetica findfont bfs .6 mul scalefont def
+/fSymbol /Symbol findfont def
+/hm fnfs 0.25 mul def
+/pw
+   cw 86.400000 mul
+def
+/ph
+   503.080648 th add
+def
+/pmw urx llx sub pw 2 mul sub 1 div def
+/pmh 0 def
+/v 0 def
+/x [
+  0
+  dup pmw add pw add
+] def
+/y [
+  pmh ph add 0 mul ph add
+  dup
+] def
+/scx sw 2 div def
+/scy sh 2 div def
+/snx urx def
+/sny lly 2 add def
+/dx llx def
+/dy sny def
+/fnx scx def
+/fny dy def
+/lx snx def
+/ly ury fnfs 0.8 mul sub def
+/sx 5 def
+/tab 8 def
+/x0 0 def
+/y0 0 def
+%%EndSetup
+
+%%Page: (1-2) 1
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(1) # (""") p
+() str 8 T (Superposition Eye Pathlength and Absorption Program) N
+(2) # () S 8 T (Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995) N
+(3) # () S 8 T (Python rewrite by Stephen P Moss, 2012-2013) N
+(4) # () S 8 T (http://about.me/gawbul) N
+(5) # () S 8 T (gawbul@gmail.com) N
+(6) # () S
+(""") p n
+(7) # () N
+(8) # (__author__ = ") S
+(Steve Moss) str
+(") p n
+(9) # (__copyright__ = ") S
+(Copyright 1995-2013, Magnus L Johnson and Stephen P Moss) str
+(") p n
+(10) # (__credits__ = [") S
+(Steve Moss) str
+(", ") p
+(Magnus Johnson) str
+(", ") p
+(Genevre Parker) str
+("]) p n
+(11) # (__license__ = ") S
+(GPLv3) str
+(") p n
+(12) # (__version__ = ") S
+(0.42b) str
+(") p n
+(13) # (__maintainer__ = ") S
+(Steve Moss) str
+(") p n
+(14) # (__email__ = ") S
+(gawbul@gmail.com) str
+(") p n
+(15) # (__status__ = ") S
+(beta) str
+(") p n
+(16) # () N
+(17) # () S
+(# import modules) c n
+(18) # () S
+(import) K
+( os, sys, time, re ) p
+(# needed for os, system, time and regular expression sp) c n
+0 T (ecific functions) N
+(19) # () S
+(from) K
+( datetime ) p
+(import) K
+( timedelta, date ) p
+(# needed for time specific functions) c n
+(20) # () S
+(import) K
+( math ) p
+(# needed for math functions \(self.pi, cos, sin, tan, atan\)) c n
+(21) # () S
+(import) K
+( getopt ) p
+(# needed to get options from command line) c n
+(22) # () S
+(import) K
+( rpy2 ) p
+(# needed for plotting subroutines in R) c n
+(23) # (#import pygame # needed for graphics output *** not yet implemented ***) N
+(24) # () N
+(25) # (# main handler subroutine) N
+(26) # () S
+(def) K
+( main\(\):) p n
+(27) # () S 8 T (""") S
+(Controls the main program flow.) str
+(""") p n
+(28) # () S 8 T () S
+(# check what the program arguments are and assign appropriate variables) c n
+(29) # () S
+() p 8 T (opts_array = handle_options\(sys.argv[1:]\)) N
+(30) # () S 8 T (\(input_file, graphicsopt\) = opts_array) N
+(31) # () S 8 T () N
+(32) # () S 8 T () S
+(# check whether the user provide an input filename) c n
+(33) # () S
+() p 8 T () S
+(if) K
+( input_file:) p n
+(34) # () S 8 T () S 16 T () S
+(# process file) c n
+(35) # () S
+() p 8 T () S 16 T (process_input_file\(input_file, graphicsopt\)) N
+(36) # () S 8 T () S 16 T (sys.exit\(\)) N
+(37) # () S 8 T () S
+(else) K
+(:) p n
+(38) # () S 8 T () S 16 T () S
+(# just continue with inline parameters below) c n
+(39) # () S
+() p 8 T () S 16 T () S
+(pass) K n
+(40) # () S
+() p 8 T () N
+(41) # () S 8 T () S
+(# show startup information) c n
+(42) # () S
+() p 8 T (startup\(\)) N
+(43) # () N
+(44) # () S 8 T () S
+(# track how long it takes) c n
+(45) # () S
+() p 8 T (start = time.time\(\)) N
+(46) # () S 8 T () S 16 T () N
+(47) # () S 8 T () S
+(# if not using an input file for the parameters you can set them manuall) c n
+0 T (y as follows) N
+(48) # () S
+() p 8 T () S
+(# setup nephrops_eye as new SuperpositionEye object - with relevant para) c n
+0 T (meters passed) S 16 T () N
+(49) # () S
+() p 8 T () S
+(# using Nephrops norvegicus flat lateral measurments) c n
+(50) # () S
+() p 8 T () S
+(# see README file or GitHub for information on parameters) c n
+(51) # () S
+() p 8 T () S
+(print) K
+( ") p
+(Setting up new superposition eye object...) str
+(") p n
+(52) # () S 8 T (nephrops_eye = SuperpositionEye\(") S
+(nephrops) str
+(", 180, 25, 7800, 50, 3200, 1.34) p n
+0 T (, 1.37, 18, 0\) ) N
+(53) # () N
+(54) # () S 8 T () S
+(# run the model) c n
+(55) # () S
+() p 8 T () S
+(print) K
+( ") p
+(Running the ray tracing model \(please wait\)...) str
+(") p n
+(56) # () S 8 T (nephrops_eye.run_model\(graphicsopt\)) N
+(57) # () S 8 T () N
+(58) # () S 8 T () S
+(# summarise the data) c n
+(59) # () S
+() p 8 T () S
+(print) K
+( ") p
+(Outputting summary data...) str
+(") p n
+(60) # () S 8 T (nephrops_eye.summarise_data\(\)) N
+(61) # () S 8 T () N
+(62) # () S 8 T () S
+(# how long did we take?) c n
+(pathlength.py) (Page 1/13) (Mar 28, 13 9:51) title
+border
+/v 1 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(63) # () p 8 T (end = time.time\(\)) N
+(64) # () S 8 T (took = end - start) N
+(65) # () S 8 T () S
+(print) K
+( ") p
+(\\nFinished in %s seconds.\\n) str
+(" % timedelta\(seconds=took\)) p n
+(66) # () S 8 T () N
+(67) # () S
+(# handle any program input options given at the command line) c n
+(68) # () S
+(def) K
+( handle_options\(optsargs\):) p n
+(69) # () S 8 T (""") S
+(Handles the input arguments to the program.) str
+(""") p n
+(70) # () S 8 T () S
+(# process using getopts) c n
+(71) # () S
+() p 8 T () S
+(try) K
+(:) p n
+(72) # () S 8 T () S 16 T (\(opts, args\) = getopt.getopt\(optsargs, ") S
+(f:gchv) str
+(", [") p
+(file=) str
+(", ") p
+(graphics) str
+(") p n
+0 T (, ") S
+(citation) str
+(", ") p
+(help) str
+(", ") p
+(version) str
+("]\)) p n
+(73) # () S 8 T () S
+(except) K
+( getopt.GetoptError as err:) p n
+(74) # () S 8 T () S 16 T () S
+(print) K
+( str\(err\)) p n
+(75) # () S 8 T () S 16 T (usage\(\)) N
+(76) # () S 8 T () S 16 T (sys.exit\(2\)) N
+(77) # () S 8 T (filename = None) N
+(78) # () S 8 T (graphicsopt = False) N
+(79) # () S 8 T () S
+(for) K
+( o, a ) p
+(in) K
+( opts:) p n
+(80) # () S 8 T () S 16 T () S
+(if) K
+( o ) p
+(in) K
+( \(") p
+(-f) str
+(", ") p
+(--file) str
+("\):) p n
+(81) # () S 8 T () S 16 T () S 24 T (filename = a) N
+(82) # () S 8 T () S 16 T () S
+(elif) K
+( o ) p
+(in) K
+( \(") p
+(-g) str
+(", ") p
+(--graphics) str
+("\):) p n
+(83) # () S 8 T () S 16 T () S 24 T (graphicsopt = True) N
+(84) # () S 8 T () S 16 T () S 24 T (sys.exit\(\)) N
+(85) # () S 8 T () S 16 T () S
+(elif) K
+( o ) p
+(in) K
+( \(") p
+(-c) str
+(", ") p
+(--citation) str
+("\):) p n
+(86) # () S 8 T () S 16 T () S 24 T (startup\(\)) N
+(87) # () S 8 T () S 16 T () S 24 T (sys.exit\(\)) N
+(88) # () S 8 T () S 16 T () S
+(elif) K
+( o ) p
+(in) K
+( \(") p
+(-h) str
+(", ") p
+(--help) str
+("\):) p n
+(89) # () S 8 T () S 16 T () S 24 T (usage\(\)) N
+(90) # () S 8 T () S 16 T () S 24 T (sys.exit\(\)) N
+(91) # () S 8 T () S 16 T () S
+(elif) K
+( o ) p
+(in) K
+( \(") p
+(-v) str
+(", ") p
+(--version) str
+("\):) p n
+(92) # () S 8 T () S 16 T () S 24 T (version = __version__) N
+(93) # () S 8 T () S 16 T () S 24 T () S
+(print) K
+( ") p
+(pathlen.py version %s) str
+(" % version) p n
+(94) # () S 8 T () S 16 T () S 24 T (sys.exit\(\)) N
+(95) # () S 8 T () S 16 T () S
+(else) K
+(:) p n
+(96) # () S 8 T () S 16 T () S 24 T (assert False, ") S
+(unhandled option) str
+(") p n
+(97) # () S 8 T () S
+(return) K
+( filename, graphicsopt) p n
+(98) # () N
+(99) # () S
+(# display startup information in the terminal) c n
+(100) # () S
+(def) K
+( startup\(\):) p n
+(101) # () S 8 T (""") S
+(Displays information about the program on startup, or via the citation input argument.) str
+(""") p n
+(102) # () S 8 T () S
+(print) K
+( ") p
+(\\nPathLength - Implements a ray tracing model to calculate resolution and sensitivity in reflectiv) str n
+0 T (e superposition compound eyes.) S
+(") p n
+(103) # () S 8 T () S
+(print) K
+( ") p
+(-) str
+(" * len\(") p
+(PathLength - Implements a ray tracing model to calculate resolution and sensitivit) str n
+0 T (y in reflective superposition compound eyes.) S
+("\)) p n
+(104) # () S 8 T () S
+(print) K
+( ") p
+(If you use this program, please cite:) str
+(") p n
+(105) # () S 8 T () S
+(print) K
+( ") p
+(\\nGaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Ey) str n
+0 T (es of Nephrops Norvegicus: Optics, \\n) S
+(" \\) p n
+(106) # () S 8 T (") S
+(Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson ) str n
+0 T (and M. P. Johnson, ed\(s\).\\n) S
+(" \\) p n
+(107) # () S 8 T (") S
+(Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Pres) str n
+0 T (s, 107:148.) S
+(") p n
+(108) # () S 8 T () S
+(print) K
+( ") p
+(-) str
+(" * len\(") p
+(Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing M) str n
+0 T (odel. In: M. L. Johnson and M. P. Johnson, ed\(s\).) S
+("\) + ") p
+(\\n) str
+(") p n
+(109) # () S 8 T () N
+(110) # () S 8 T () S
+(return) K n
+(111) # () S
+() p 8 T () N
+(112) # () S
+(# display usage information to the terminal) c n
+(113) # () S
+(def) K
+( usage\(\):) p n
+(114) # () S 8 T (""") S
+(Displays usage information via the help input argument.) str
+(""") p n
+(115) # () S 8 T () S
+(print) K
+( ") p
+(The valid program options are:) str
+(") p n
+(116) # () S 8 T () S
+(print) K
+( ") p
+(\\t-f or --file\\t\\tAllows the user to provide a csv input file with sets\\n\\t\\t\\t\\tof parameters for indi) str n
+0 T (vidual runs on individual lines.) S
+(") p n
+(117) # () S 8 T () S
+(print) K
+( ") p
+(\\t-g or --graphics\\tTurn graphics on or off. *** not yet implemented ***) str
+(") p n
+(118) # () S 8 T () S
+(print) K
+( ") p
+(\\t-c or --citation\\tDisplays the citation information.) str
+(") p n
+(119) # () S 8 T () S
+(print) K
+( ") p
+(\\t-h or --help\\t\\tDisplays this usage information.) str
+(") p n
+(120) # () S 8 T () S
+(print) K
+( ") p
+(\\t-v or --version\\t\\tDisplays the program version.) str
+(") p n
+(pathlength.py) (Page 2/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (1/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (3-4) 2
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(121) # () p 8 T () S
+(print) K
+( ") p
+(\\n\\tFor more information visit https://github.com/gawbul/pathlength/\\n\\tor email Steve Moss \(ga) str n
+0 T (wbul@gmail.com\).) S
+(") p n
+(122) # () S 8 T () S
+(return) K n
+(123) # () N
+(124) # () S
+(# process the parameter input file) c n
+(125) # () S
+(def) K
+( process_input_file\(filename, graphicsflag\):) p n
+(126) # () S 8 T (""") S
+(Processes a csv input file for multiple parameter model testing.) str
+(""") p n
+(127) # () S 8 T () S
+(# first check the file exists and exist with error message if not) c n
+(128) # () S
+() p 8 T () S
+(if) K
+( ) p
+(not) K
+( os.path.exists\(filename\):) p n
+(129) # () S 8 T () S 16 T () S
+(print) K
+( ") p
+(Error: Filename \\'%s\\' does not exist) str
+(" % filename) p n
+(130) # () S 8 T () S 16 T (sys.exit\(\)) N
+(131) # () N
+(132) # () S 8 T () S
+(# track how long it takes) c n
+(133) # () S
+() p 8 T (start = time.time\(\)) N
+(134) # () S 8 T () S 16 T () N
+(135) # () S 8 T () S
+(# file must exist, so open and parse) c n
+(136) # () S
+() p 8 T (inputfile = open\(filename, ") S
+(r) str
+("\)) p n
+(137) # () S 8 T (count = 1) N
+(138) # () S 8 T () S
+(for) K
+( line ) p
+(in) K
+( inputfile.readlines\(\):) p n
+(139) # () S 8 T () S 16 T () S
+(# check if it is a comment line) c n
+(140) # () S
+() p 8 T () S 16 T () N
+(141) # () S 8 T () S 16 T () S
+(# filter out whitespace and any dodgy characters and split into ) c n
+0 T (parts) N
+(142) # () S
+() p 8 T () S 16 T (parts = re.sub\(') S
+(\\s\\W) str
+(', '', line\).split\(") p
+(,) str
+("\)) p n
+(143) # () N
+(144) # () S 8 T () S 16 T () S
+(# check we have the right number of parameters) c n
+(145) # () S
+() p 8 T () S 16 T () S
+(if) K
+( len\(parts\) == 0:) p n
+(146) # () S 8 T () S 16 T () S 24 T () S
+(# this just means that there was a blank line?) c n
+(147) # () S
+() p 8 T () S 16 T () S 24 T () S
+(continue) K n
+(148) # () S
+() p 8 T () S 16 T () S
+(if) K
+( len\(parts\) != 10:) p n
+(149) # () S 8 T () S 16 T () S 24 T () S
+(print) K
+( ") p
+(Error: The number of parameters is incorrect on line %d.) str
+(" % count) p n
+(150) # () S 8 T () S 16 T () S 24 T () S
+(continue) K n
+(151) # () S
+() p 8 T () S 16 T () N
+(152) # () S 8 T () S 16 T () S
+(# assign the variables from the parts list) c n
+(153) # () S
+() p 8 T () S 16 T (\(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra\) = parts) N
+(154) # () S 8 T () S 16 T () N
+(155) # () S 8 T () S 16 T () S
+(# create an object) c n
+(156) # () S
+() p 8 T () S 16 T () S
+(print) K
+( ") p
+(Setting up new superposition eye object...) str
+(") p 72 T () S 80 T () N
+(157) # () S 8 T () S 16 T (eye_object_from_file = SuperpositionEye\(str\(sn\), int\(rl\), float\() N
+0 T (rw\), int\(ed\), float\(fw\), int\(ad\), float\(cri\), float\(rri\), int\(bce\), float\(pra\)\)) N
+(158) # () N
+(159) # () S 8 T () S 16 T () S
+(# run the model) c 32 T () N
+(160) # () S
+() p 8 T () S 16 T () S
+(print) K
+( ") p
+(Running the ray tracing model \(please wait\)...) str
+(") p n
+(161) # () S 8 T () S 16 T (eye_object_from_file.run_model\(graphicsflag\)) N
+(162) # () S 8 T () N
+(163) # () S 8 T () S 16 T () S
+(# summarise the data) c n
+(164) # () S
+() p 8 T () S 16 T () S
+(print) K
+( ") p
+(Outputting summary data...) str
+(") p n
+(165) # () S 8 T () S 16 T (eye_object_from_file.summarise_data\(\)) N
+(166) # () S 8 T () S 16 T () N
+(167) # () S 8 T () S 16 T () S
+(# increment line count) c n
+(168) # () S
+() p 8 T () S 16 T (count += 1) N
+(169) # () N
+(170) # () S 8 T () S
+(# how long did we take?) c n
+(171) # () S
+() p 8 T (end = time.time\(\)) N
+(172) # () S 8 T (took = end - start) N
+(173) # () S 8 T () S
+(print) K
+( ") p
+(\\nFinished in %s seconds.\\n) str
+(" % timedelta\(seconds=took\)) p n
+(174) # () S 8 T () S
+(return) K n
+(175) # () N
+(176) # () S
+(# setup superposition eye class) c n
+(177) # () S
+(class) K
+( SuperpositionEye\(\):) p n
+(178) # () S 8 T () S
+(def) K
+( __init__\(self, sn, rl, rw, ed, fw, ad, cri, rri, bce, pra\):) p n
+(179) # () S 8 T () S 16 T (""") S
+(Initialises the default variables of a new SuperpositionEye object.) str
+(""") p n
+(180) # () S 8 T () S 16 T () S
+(# store parameters incase needed in future) c n
+(181) # () S
+() p 8 T () S 16 T (self.eye_parameters = [sn, rl, rw, ed, fw, ad, cri, rri, bce, pr) N
+0 T (a]) N
+(182) # () S 8 T () S 16 T () N
+(pathlength.py) (Page 3/13) (Mar 28, 13 9:51) title
+border
+/v 1 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(183) # () p 8 T () S 16 T () S
+(# set variables for output data) c n
+(184) # () S
+() p 8 T () S 16 T (self.rowdata = []) N
+(185) # () S 8 T () S 16 T (self.output_data = []) N
+(186) # () S 8 T () S 16 T (self.aa = 100*[0]) N
+(187) # () S 8 T () S 16 T (self.ab = 100*[0]) N
+(188) # () S 8 T () S 16 T () N
+(189) # () S 8 T () S 16 T () S
+(# set variables for calculations) c n
+(190) # () S
+() p 8 T () S 16 T (self.pi = math.pi ) S
+(# define self.pi) c n
+(191) # () S
+() p 8 T () S 16 T (self.conv = self.pi / 180 ) S
+(# convert radians to degrees \(1 degree) c n
+0 T ( = self.pi / 180 radians\)) N
+(192) # () S
+() p 8 T () S 16 T (self.proximal_rhabdom_angle = pra ) S
+(# used for pointy rhabdoms) c n
+(193) # () S
+() p 8 T () S 16 T () N
+(194) # () S 8 T () S 16 T () S
+(# set files for output data) c n
+(195) # () S
+() p 8 T () S 16 T (self.setup_files\(sn\) ) S
+(# passes species name to prepend output fil) c n
+0 T (enames) N
+(196) # () N
+(197) # () S
+() p 8 T () S 16 T (self.iteration_count = 1 ) S
+(# q = 0 in original) c n
+(198) # () S
+() p 8 T () S 16 T (self.shielding_pigment_length = 0.0 ) S
+(# extent of shielding pigmen) c n
+0 T (t set to zero) N
+(199) # () N
+(200) # () S
+() p 8 T () S 16 T () S
+(# check the blur circle extent isn't set to less than 1 otherwis) c n
+0 T (e we will get division by zero error) N
+(201) # () S
+() p 8 T () S 16 T () S
+(if) K
+( bce < 1:) p n
+(202) # () S 8 T () S 16 T () S 24 T (bce = 1) N
+(203) # () S 8 T () S 16 T (self.blur_circle_extent = bce ) S
+(# blur circle extent) c n
+(204) # () S
+() p 8 T () S 16 T () N
+(205) # () S 8 T () S 16 T () S
+(# input data - eye parameters) c n
+(206) # () S
+() p 8 T () S 16 T (self.rhabdom_length = float\(rl\) ) S
+(# rhabdom length) c n
+(207) # () S
+() p 8 T () S 16 T (self.increment_amount = self.rhabdom_length / 10 ) S
+(# amount to inc) c n
+0 T (rement tapetum or pigment) N
+(208) # () S
+() p 8 T () S 16 T (self.reflective_tapetum_length = 0.0 ) S
+(# extent of tapetal pigment) c n
+0 T ( set to zero) N
+(209) # () N
+(210) # () S
+() p 8 T () S 16 T (self.num_facets = 0 ) S
+(# num of facets across aperture) c n
+(211) # () S
+() p 8 T () S 16 T (self.rhabdom_width = rw ) S
+(# rhabdom width/diameter) c n
+(212) # () S
+() p 8 T () S 16 T (self.aperture_diameter = ad ) S
+(# aperture diameter) c n
+(213) # () S
+() p 8 T () S 16 T (self.y = 0 ) S
+(# y??? - set to one originally, but we use 0 based in) c n
+0 T (dexing in python) N
+(214) # () S
+() p 8 T () S 16 T (self.facet_width = fw ) S
+(# facet width) c n
+(215) # () S
+() p 8 T () S 16 T (self.eye_diameter = ed ) S
+(# eye diameter) c n
+(216) # () S
+() p 8 T () S 16 T () N
+(217) # () S 8 T () S 16 T () S
+(# undeclared in original code) c n
+(218) # () S
+() p 8 T () S 16 T (self.boa = 0 ) S
+(# boa???) c n
+(219) # () S
+() p 8 T () S 16 T (self.tot = 0 ) S
+(# tot???) c n
+(220) # () S
+() p 8 T () S 16 T (self.col_total = 0 ) S
+(# total rhaboms?) c n
+(221) # () S
+() p 8 T () S 16 T (self.row_total = 0 ) S
+(# total facets?) c n
+(222) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () N
+(223) # () S 8 T () S
+(def) K
+( initial_calculations\(self\):) p n
+(224) # () S 8 T () S 16 T (""") S
+(Does some initial calculations before running the main model.) str
+(""") p n
+(225) # () S 8 T () S 16 T () S
+(# do initial calculations) c n
+(226) # () S
+() p 8 T () S 16 T (\(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra\) = self.eye_paramete) N
+0 T (rs) S 8 T () S
+(# get stored parameters) c n
+(227) # () S
+() p 8 T () S 16 T () N
+(228) # () S 8 T () S 16 T (self.eye_circumference = self.pi * self.eye_diameter ) S
+(# circumfer) c n
+0 T (ence of eye) N
+(229) # () S
+() p 8 T () S 16 T (self.aperture_radius = self.aperture_diameter / 2 ) S
+(# aa in origin) c n
+0 T (al code - aperture radius) N
+(230) # () S
+() p 8 T () S 16 T (self.eye_radius = self.eye_diameter / 2) S 56 T () S
+(# eye radius) c n
+(231) # () S
+() p 8 T () S 16 T (self.da = math.sqrt\(\(self.eye_radius ** 2\) - \(self.aperture_radi) N
+0 T (us ** 2\)\) ) S
+(# DA???) c n
+(232) # () S
+() p 8 T () S 16 T (self.ac = math.atan\(self.aperture_radius / self.da\) / self.conv) S 80 T () S
+() c n
+0 T (# AC???) N
+(233) # () S
+() p 8 T () S 16 T (self.aperture_diameter = \(self.ac / 360\) * self.eye_circumferenc) N
+0 T (e ) S
+(# change aperture diameter) c n
+(234) # () S
+() p 8 T () S 16 T (self.optical_axis = \(self.facet_width / self.eye_circumference\) ) N
+0 T (* 360 ) S
+(# calculate optical axis from eye circumference and facet width) c n
+(pathlength.py) (Page 4/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (2/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (5-6) 3
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(235) # () p n
+(236) # () S 8 T () S 16 T (self.facet_num = 1 ) S
+(# facet number) c n
+(237) # () S
+() p 8 T () S 16 T (self.num_facets = int\(self.aperture_diameter / self.facet_width\)) N
+0 T ( ) S
+(# num of facets across aperture) c n
+(238) # () S
+() p 8 T () S 16 T (self.rhabdom_radius = self.rhabdom_width / 2 ) S
+(# rhabdom radius) c n
+(239) # () S
+() p 8 T () S 16 T (self.old_rhabdom_length = self.rhabdom_length ) S
+(# old rhabdom leng) c n
+0 T (th) N
+(240) # () S
+() p 8 T () S 16 T (self.max_rhabdom_length = self.rhabdom_length ) S
+(# store rhabdom le) c n
+0 T (ngth for main loop) N
+(241) # () S
+() p 8 T () S 16 T (self.inter_ommatidial_angle = 0) S 48 T () S
+(# inter-ommatidial angle) c n
+(242) # () S
+() p 8 T () S 16 T (self.current_facet = 0 ) S
+(# current facet) c n
+(243) # () N
+(244) # () S
+() p 8 T () S 16 T () S
+(# angle of total internal reflection \(rhabdoms\)) c n
+(245) # () S
+() p 8 T () S 16 T (self.cytoplasm_ri = cri ) S
+(# cytoplasm refractive index) c n
+(246) # () S
+() p 8 T () S 16 T (self.rhabdom_ri = rri ) S
+(# rhabdom refractive index ) c n
+(247) # () S
+() p 8 T () S 16 T (self.snells_law = math.asin\(self.cytoplasm_ri / self.rhabdom_ri\)) N
+0 T ( / self.conv ) S
+(# calculate angle for total internal reflection using Snell's law) c n
+(248) # () S
+() p 8 T () S 16 T (self.critical_angle = 90 - self.snells_law ) S
+(# critical angle belo) c n
+0 T (w which light is totally internally reflected within rhabdom) N
+(249) # () S
+() p 8 T () S 16 T (self.mx = math.sqrt\(\(self.rhabdom_length ** 2\) + \(self.rhabdom_r) N
+0 T (adius ** 2\)\) ) S
+(# mx???) c n
+(250) # () N
+(251) # () S
+() p 8 T () S 16 T () S
+(# output initial P \(pigment\) and T \(tapetum\) to output file one) c n
+(252) # () S
+() p 8 T () S 16 T (self.write_output\(self.outputfile_one, self.shielding_pigment_le) N
+0 T (ngth\) ) S
+(# write pigment length to output file) c n
+(253) # () S
+() p 8 T () S 16 T (self.write_output\(self.outputfile_one, self.reflective_tapetum_l) N
+0 T (ength\) ) S
+(# write tapetum length to output file) c n
+(254) # () S
+() p 8 T () S 16 T () N
+(255) # () S 8 T () S 16 T (self.cz = 0) S 32 T () S
+(# increases angle of acceptance of rhabdom - ini) c n
+0 T (tialise to false) N
+(256) # () S
+() p 8 T () S 16 T () N
+(257) # () S 8 T () S 16 T () S
+(return) K n
+(258) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+0 T () S 0 T () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+(259) # () S 8 T () S
+(def) K
+( run_model\(self, graphicsflag\):) p n
+(260) # () S 8 T () S 16 T (""") S
+(Main workhorse of the program. Runs the ray tracing model with the given parameters.) str
+("") p n
+0 T (") N
+(261) # () S 8 T () S 16 T () S
+(# print start_time and write to debug file) c n
+(262) # () S
+() p 8 T () S 16 T (start_time = time.time\(\)) N
+(263) # () S 8 T () S 16 T (self.write_output\(self.debug_file, ") S
+(*******************\\n%s\\n) str
+(" % dat) p n
+0 T (e.fromtimestamp\(start_time\).strftime\(") S
+(%d/%m/%Y %H:%M:%S) str
+("\)\)) p n
+(264) # () S 8 T () S 16 T () N
+(265) # () S 8 T () S 16 T () S
+(# do the initial calculations) c n
+(266) # () S
+() p 8 T () S 16 T (self.initial_calculations\(\)) N
+(267) # () S 8 T () S 16 T () N
+(268) # () S 8 T () S 16 T () S
+(# main program loop) c 40 T () N
+(269) # () S
+() p 8 T () S 16 T () S
+(while) K
+( True:) p n
+(270) # () S 8 T () S 16 T () S 24 T () S
+(# calculate prox-dist length of first pass) c n
+(271) # () S
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( self.boa > self.critical_angle ) p
+(and) K
+( self.boa < 25 ) p
+(and) K
+( ) p n
+0 T (self.cz == 0:) N
+(272) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(# change shape of proximal portion of the rhabdo) c n
+0 T (m) N
+(273) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T (self.boa -= self.proximal_rhabdom_angle) N
+(274) # () S 8 T () S 16 T () S 24 T () S
+(if) K
+( self.inter_ommatidial_angle == 0:) p n
+(275) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(# ray absorbed by proximal shielding pigment) c n
+(276) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T (self.case_four\(\)) N
+(277) # () S 8 T () S 16 T () S 24 T () S
+(else) K
+(:) p n
+(278) # () S 8 T () S 16 T () S 24 T () S 32 T (self.y = self.rhabdom_radius / math.tan\(self.boa) N
+0 T ( * self.conv\)) N
+(279) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(if) K
+( self.y >= self.rhabdom_length:) p n
+(280) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(# ray reflected off base of rhabdom by t) c n
+0 T (apetum) N
+(281) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.case_three\(\)) N
+(282) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(elif) K
+( self.y > self.rhabdom_length - self.shieldi) p n
+0 T (ng_pigment_length ) S
+(or) K
+( self.y > self.rhabdom_length - self.reflective_tapetum_leng) p n
+0 T (th ) S
+(or) K
+( self.boa < self.critical_angle:) p n
+(pathlength.py) (Page 5/13) (Mar 28, 13 9:51) title
+border
+/v 1 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(283) # () p 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.case_two\(\)) N
+(284) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(else) K
+(:) p n
+(285) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(# light passes through rhabdom) c n
+(286) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.case_one\(\)) N
+(287) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(# goto 1002) c n
+(288) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( self.rhabdom_length <= self.reflectiv) p n
+0 T (e_tapetum_length ) S
+(or) K
+( self.rhabdom_length <= self.shielding_pigment_length:) p n
+(289) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(pass) K n
+(290) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+(:) p n
+(291) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(# *** call display graphics here) c n
+0 T ( ***) N
+(292) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(continue) K n
+(293) # () N
+(294) # () S
+() p 8 T () S 16 T () S 24 T (self.current_facet += 1) N
+(295) # () S 8 T () S 16 T () S 24 T (self.rhabdom_radius = self.rhabdom_width / 2) S 72 T () S 80 T () N
+0 T () S 0 T () S 8 T () N
+(296) # () S 8 T () S 16 T () S 24 T (self.rhabdom_length = self.old_rhabdom_length) N
+(297) # () S 8 T () S 16 T () S 24 T (self.inter_ommatidial_angle += self.optical_axis) N
+(298) # () S 8 T () S 16 T () S 24 T (self.cz = 0 ) S
+(# set CZ as false) c n
+(299) # () N
+(300) # () S
+() p 8 T () S 16 T () S 24 T () S
+(# row complete append 998 and output to file) c n
+(301) # () S
+() p 8 T () S 16 T () S 24 T (self.col_total = len\(self.rowdata\)) N
+(302) # () S 8 T () S 16 T () S 24 T (self.rowdata.append\(998\)) N
+(303) # () S 8 T () S 16 T () S 24 T (self.write_output\(self.outputfile_one, self.rowdata\)) N
+(304) # () N
+(305) # () S 8 T () S 16 T () S 24 T () S
+(# append row to output_data for outputfile_two) c n
+(306) # () S
+() p 8 T () S 16 T () S 24 T (self.output_data.append\(self.rowdata[0:-1]\)) N
+(307) # () S 8 T () S 16 T () S 24 T (self.row_total = len\(self.output_data\)) N
+(308) # () N
+(309) # () S 8 T () S 16 T () S 24 T () S
+(# clear self.rowdata) c n
+(310) # () S
+() p 8 T () S 16 T () S 24 T (self.rowdata = []) S 48 T () S 56 T () N
+(311) # () S 8 T () S 16 T () S 24 T () N
+(312) # () S 8 T () S 16 T () S 24 T () S
+(# account for refraction at cornea) c n
+(313) # () S
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( self.inter_ommatidial_angle < 60:) p n
+(314) # () S 8 T () S 16 T () S 24 T () S 32 T (self.boa = \(self.inter_ommatidial_angle * 0.8677) N
+0 T (\) + 3.38) S 16 T () S 24 T () N
+(315) # () S 8 T () S 16 T () S 24 T () S
+(if) K
+( self.inter_ommatidial_angle < 50:) p n
+(316) # () S 8 T () S 16 T () S 24 T () S 32 T (self.boa = \(self.inter_ommatidial_angle * 0.9196) N
+0 T (\) + 0.8676) S 16 T () S 24 T () N
+(317) # () S 8 T () S 16 T () S 24 T () S
+(if) K
+( self.inter_ommatidial_angle < 35:) p n
+(318) # () S 8 T () S 16 T () S 24 T () S 32 T (self.boa = \(self.inter_ommatidial_angle * 0.9407) N
+0 T (\) + 0.1648) S 16 T () S 24 T () N
+(319) # () S 8 T () S 16 T () S 24 T () S
+(if) K
+( self.inter_ommatidial_angle < 15:) p n
+(320) # () S 8 T () S 16 T () S 24 T () S 32 T (self.boa = \(self.inter_ommatidial_angle * 0.9494) N
+0 T (\) + 0.004667) N
+(321) # () S 8 T () S 16 T () S 24 T () S
+(if) K
+( self.inter_ommatidial_angle > 60:) p n
+(322) # () S 8 T () S 16 T () S 24 T () S 32 T (self.print_output\(") S
+(*** UNREAL ANGLE AT CORNEA ***) str
+() p n
+0 T ("\)) N
+(323) # () S 8 T () S 16 T () S 24 T () S 32 T (self.write_output\(self.outputfile_one, ") S
+(UNREAL ) str n
+0 T (ANGLE AT CORNEA) S
+("\)) p n
+(324) # () N
+(325) # () S 8 T () S 16 T () S 24 T () S
+(# light loss at cone due to angle of incidence) c n
+(326) # () S
+() p 8 T () S 16 T () S 24 T (self.cc = self.facet_width / math.tan\(self.boa * self.co) N
+0 T (nv\) ) S
+(# CC???) c 16 T () S 24 T () N
+(327) # () S
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( self.cc > \(self.facet_width * 2\):) p n
+(328) # () S 8 T () S 16 T () S 24 T () S 32 T (self.fw) S 40 T (= math.cos\(self.inter_ommatidial_angle *) N
+0 T ( self.conv\) * self.facet_width ) S
+(# FW???) c n
+(329) # () S
+() p 8 T () S 16 T () S 24 T () S
+(else) K
+(:) p n
+(330) # () S 8 T () S 16 T () S 24 T () S 32 T (self.ll = \(\(2 * self.cc\) - \(2 * self.facet_width) N
+0 T (\)\)) N
+(331) # () S 8 T () S 16 T () S 24 T () S 32 T (self.fw = math.sin\(self.inter_ommatidial_angle *) N
+0 T ( self.conv\) * self.ll) N
+(332) # () S 8 T () S 16 T () S 24 T (self.facet_num = self.fw / self.facet_width) N
+(333) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () N
+(334) # () S 8 T () S 16 T () S 24 T () S
+(# account for change in angle between adjacent rhabdoms) c n
+(335) # () S
+() p 8 T () S 16 T () S 24 T (self.fd = self.num_facets / self.blur_circle_extent ) S
+(# FD) c n
+(pathlength.py) (Page 6/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (3/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (7-8) 4
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+0 T (??? - this is used to divide the aperture up ) c n
+(336) # () S
+() p 8 T () S 16 T () S 24 T () S
+(# if current facet is outside edge of eyeshine patch the) c n
+0 T (n break out of for loop) N
+(337) # () S
+() p 8 T () S 16 T () S 24 T () S
+(# otherwise check where the current facet is and transfe) c n
+0 T (r POL to appropriate rhabdom accordingly) N
+(338) # () S
+() p 8 T () S 16 T () S 24 T (self.nx = 1) N
+(339) # () S 8 T () S 16 T () S 24 T () S
+(for) K
+( i ) p
+(in) K
+( range\(self.blur_circle_extent\):) p n
+(340) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(if) K
+( self.current_facet >= self.num_facets:) p n
+(341) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(pass) K n
+(342) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S
+(elif) K
+( self.current_facet >= \(self.fd * self.nx\):) p n
+(343) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.boa += self.optical_axis) N
+(344) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.rowdata.append\(0\)) N
+(345) # () S 8 T () S 16 T () S 24 T () S 32 T (self.nx += 1) N
+(346) # () N
+(347) # () S 8 T () S 16 T () S 24 T () S
+(# check to see if edge of eyeshine patch has been reache) c n
+0 T (d) N
+(348) # () S
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( self.current_facet >= self.num_facets:) p n
+(349) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(pass) K n
+(350) # () S
+() p 8 T () S 16 T () S 24 T () S
+(else) K
+(:) p n
+(351) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(continue) K n
+(352) # () S
+() p 8 T () S 16 T () S 24 T () N
+(353) # () S 8 T () S 16 T () S 24 T () S
+(# iterate over output data) c n
+(354) # () S
+( ) p 8 T () S 16 T () S 24 T () S
+(for) K
+( col ) p
+(in) K
+( range\(self.col_total\):) p n
+(355) # ( ) S 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( row ) p
+(in) K
+( range\(self.row_total\):) p n
+(356) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( self.col_total > len\(self.output_data) p n
+0 T ([row]\):) N
+(357) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(for) K
+( i ) p
+(in) K
+( range\(self.col_total - ) p n
+0 T (len\(self.output_data[row]\)\):) N
+(358) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.output_data[row].ap) N
+0 T (pend\(0\)) N
+(359) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(# check all rows ) c n
+(360) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( self.output_data[row][col] > 0:) p n
+(361) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.ab[col] = 1 - math.exp\(-0.0) N
+0 T (067 * self.output_data[row][col]\)) N
+(362) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(elif) K
+( self.output_data[row][col] == 0:) p n
+(363) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.ab[col] = 0) N
+(364) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( col == 0 ) p
+(and) K
+( self.ab[col] > 0:) p n
+(365) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.bx = 100 * self.ab[col]) N
+(366) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( col > 0 ) p
+(and) K
+( self.ab[col] > 0:) p n
+(367) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.bx = 100 * \(\(1 - self.tot\) ) N
+0 T (* self.ab[col]\)) N
+(368) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( self.ab[col] == 0:) p n
+(369) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.bx = 0) N
+(370) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.tot += \(self.bx / 100\)) N
+(371) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.aa[col] += self.bx) N
+(372) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.bx = 0) N
+(373) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.write_output\(self.debug_file, [col ) N
+0 T (+ 1, self.aa[col], self.ab[col], row + 1]\)) N
+(374) # () S 8 T () S 16 T () S 24 T () S 32 T (self.bx = 0) N
+(375) # () S 8 T () S 16 T () S 24 T () S 32 T (self.tot = 0) N
+(376) # () S 8 T () S 16 T () N
+(377) # () S 8 T () S 16 T () S 24 T (self.x = 0) N
+(378) # () S 8 T () S 16 T () S 24 T (output_tmp = []) N
+(379) # () S 8 T () S 16 T () S 24 T (output_tmp.append\(self.reflective_tapetum_length\)) N
+(380) # () S 8 T () S 16 T () S 24 T (output_tmp.append\(self.shielding_pigment_length\)) N
+(381) # () S 8 T () S 16 T () S 24 T () S
+(for) K
+( i ) p
+(in) K
+( range\(self.col_total\):) p n
+(382) # () S 8 T () S 16 T () S 24 T () S 32 T (self.aa[i] = int\(self.aa[i] / self.row_total\)) N
+(383) # () S 8 T () S 16 T () S 24 T () S 32 T (output_tmp.append\(self.aa[i]\)) N
+(384) # () S 8 T () S 16 T () S 24 T () S 32 T (self.aa[i] = 0) N
+(385) # () S 8 T () S 16 T () S 24 T (output_tmp.append\(999\)) S 48 T () N
+(386) # () S 8 T () S 16 T () S 24 T (self.print_output\(""\)) N
+(387) # () S 8 T () S 16 T () S 24 T (self.write_output\(self.outputfile_two, output_tmp\)) N
+(388) # () S 8 T () S 16 T () S 24 T (self.bx = 0) N
+(389) # () N
+(390) # () S 8 T () S 16 T () S 24 T () S
+(# reset tapetum to zero and increase pigment by 10%) c n
+(391) # () S
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( self.reflective_tapetum_length >= self.max_rhabdom_le) p n
+(pathlength.py) (Page 7/13) (Mar 28, 13 9:51) title
+border
+/v 1 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+0 T (ngth ) p
+(and) K
+( self.shielding_pigment_length >= self.max_rhabdom_length:) p n
+(392) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(# increment iteration count and output count to ) c n
+0 T (screen and 999 to the file) N
+(393) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T (self.iteration_count += 1) N
+(394) # () S 8 T () S 16 T () S 24 T () S 32 T (self.write_output\(self.outputfile_one, 999\)) N
+(395) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(# end of program) c n
+(396) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T (sys.stdout.write\(") S
+(\\a) str
+("\) ) p
+(# beep) c 64 T () N
+(397) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T (sys.stdout.flush\(\) ) S
+(# flush beep) c n
+(398) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S
+(break) K n
+(399) # () S
+() p 8 T () S 16 T () S 24 T () S
+(elif) K
+( self.reflective_tapetum_length >= self.max_rhabdom_) p n
+0 T (length ) S
+(and) K
+( self.shielding_pigment_length < self.max_rhabdom_length:) p n
+(400) # () S 8 T () S 16 T () S 24 T () S 32 T (self.reflective_tapetum_length = 0) N
+(401) # () S 8 T () S 16 T () S 24 T () S 32 T (self.shielding_pigment_length += self.increment_) N
+0 T (amount) N
+(402) # () S 8 T () S 16 T () S 24 T () S
+(else) K
+(:) p n
+(403) # () S 8 T () S 16 T () S 24 T () S 32 T (self.reflective_tapetum_length += self.increment) N
+0 T (_amount) S 8 T () S 16 T () S 24 T () N
+(404) # () N
+(405) # () S 8 T () S 16 T () S 24 T () S
+(# increment iteration count and output count to screen a) c n
+0 T (nd 999 to the file) N
+(406) # () S
+() p 8 T () S 16 T () S 24 T (self.iteration_count += 1) N
+(407) # () S 8 T () S 16 T () S 24 T (self.write_output\(self.outputfile_one, 999\)) N
+(408) # () S 8 T () S 16 T () S 24 T () N
+(409) # () S 8 T () S 16 T () S 24 T () S
+(# reset output data) c n
+(410) # () S
+() p 8 T () S 16 T () S 24 T (self.output_data = []) N
+(411) # () S 8 T () S 16 T () S 24 T () N
+(412) # () S 8 T () S 16 T () S 24 T () S
+(# reset parameters) c n
+(413) # () S
+() p 8 T () S 16 T () S 24 T (self.reset_parameters\(\)) N
+(414) # () S 8 T () S 16 T () S 24 T () N
+(415) # () S 8 T () S 16 T () S
+(# print end_time) c n
+(416) # () S
+() p 8 T () S 16 T (end_time = time.time\(\)) N
+(417) # () S 8 T () S 16 T (self.write_output\(self.debug_file, ") S
+(\\n%s\\n*******************) str
+(" % dat) p n
+0 T (e.fromtimestamp\(end_time\).strftime\(") S
+(%d/%m/%Y %H:%M:%S) str
+("\)\)) p n
+(418) # () S 8 T () S 16 T () N
+(419) # () S 8 T () S
+(def) K
+( case_one\(self\):) p n
+(420) # () S 8 T () S 16 T () S
+(# no reflection - light passes through rhabdom) c n
+(421) # () S
+() p 8 T () S 16 T (self.x = self.rhabdom_radius / math.sin\(self.boa * self.conv\)) N
+(422) # () S 8 T () S 16 T (self.rowdata.append\(self.x * self.facet_num\)) N
+(423) # () S 8 T () S 16 T (self.rhabdom_length -= self.y) N
+(424) # () S 8 T () S 16 T (self.boa += self.optical_axis) N
+(425) # () S 8 T () S 16 T (self.cz = 1 ) S
+(# set CZ to true) c 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+0 T () S 0 T () S 8 T () S 16 T () N
+(426) # () S
+() p 8 T () S 16 T () N
+(427) # () S 8 T () S
+(def) K
+( case_two\(self\):) p n
+(428) # () S 8 T () S 16 T () S
+(# reflection from edge) c n
+(429) # () S
+() p 8 T () S 16 T (self.x = self.rhabdom_radius / math.sin\(self.boa * self.conv\)) N
+(430) # () S 8 T () S 16 T (self.z = \(self.rhabdom_length - self.y\) / math.cos\(self.boa * se) N
+0 T (lf.conv\)) N
+(431) # () S 8 T () S 16 T () N
+(432) # () S 8 T () S 16 T () S
+(if) K
+( self.z > self.x:) p n
+(433) # () S 8 T () S 16 T () S 24 T (self.z = self.x) N
+(434) # () S 8 T () S 16 T () S
+(if) K
+( \(self.x + self.z\) > self.old_rhabdom_length:) p n
+(435) # () S 8 T () S 16 T () S 24 T (self.v = self.x + self.z) N
+(436) # () S 8 T () S 16 T () S
+(elif) K
+( \(self.x + self.z\) < self.old_rhabdom_length:) p n
+(437) # () S 8 T () S 16 T () S 24 T (self.v = self.old_rhabdom_length) N
+(438) # () S 8 T () S 16 T () N
+(439) # () S 8 T () S 16 T () S
+(if) K
+( self.reflective_tapetum_length == 0:) p n
+(440) # () S 8 T () S 16 T () S 24 T (val = \(self.x + self.z\) * self.facet_num) N
+(441) # () S 8 T () S 16 T () S
+(elif) K
+( self.reflective_tapetum_length > 0:) p n
+(442) # () S 8 T () S 16 T () S 24 T (val = \(self.x + self.z + self.v\) * self.facet_num) N
+(443) # () S 8 T () S 16 T () S
+(if) K
+( self.shielding_pigment_length > 0:) p n
+(444) # () S 8 T () S 16 T () S 24 T (val = \(self.x + self.z\) * self.facet_num) N
+(445) # () S 8 T () S 16 T () S
+(if) K
+( self.shielding_pigment_length > \(self.rhabdom_length - self.y) p n
+0 T (\):) N
+(446) # () S 8 T () S 16 T () S 24 T (val = self.x * self.facet_num) N
+(447) # () S 8 T () S 16 T (self.rowdata.append\(val\)) N
+(pathlength.py) (Page 8/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (4/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (9-10) 5
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(448) # () p 8 T () S 16 T () S
+(return) K n
+(449) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () N
+(450) # () S 8 T () S
+(def) K
+( case_three\(self\):) p n
+(451) # () S 8 T () S 16 T () S
+(# bounce off base) c n
+(452) # () S
+() p 8 T () S 16 T () S
+(if) K
+( self.y == self.rhabdom_length:) p n
+(453) # () S 8 T () S 16 T () S 24 T (self.x = self.mx) N
+(454) # () S 8 T () S 16 T () S
+(if) K
+( self.y > self.rhabdom_length:) p n
+(455) # () S 8 T () S 16 T () S 24 T (self.x = self.rhabdom_length / math.cos\(self.boa * self.) N
+0 T (conv\)) N
+(456) # () S 8 T () S 16 T () S
+(if) K
+( self.x > self.old_rhabdom_length:) p n
+(457) # () S 8 T () S 16 T () S 24 T (self.v = self.x) N
+(458) # () S 8 T () S 16 T () S
+(if) K
+( self.x < self.old_rhabdom_length:) p n
+(459) # () S 8 T () S 16 T () S 24 T (self.v = self.old_rhabdom_length) N
+(460) # () S 8 T () S 16 T () N
+(461) # () S 8 T () S 16 T () S
+(if) K
+( self.reflective_tapetum_length == 0:) p n
+(462) # () S 8 T () S 16 T () S 24 T (val = self.x * self.facet_num) N
+(463) # () S 8 T () S 16 T () S
+(if) K
+( self.reflective_tapetum_length > 0:) p n
+(464) # () S 8 T () S 16 T () S 24 T (val = \(self.x + self.v\) * self.facet_num) N
+(465) # () S 8 T () S 16 T () S
+(if) K
+( self.shielding_pigment_length > 0:) p n
+(466) # () S 8 T () S 16 T () S 24 T (val = self.x * self.facet_num) N
+(467) # () S 8 T () S 16 T (self.rowdata.append\(val\)) N
+(468) # () S 8 T () S 16 T () S
+(return) K n
+(469) # () S
+() p 8 T () S 16 T () S 24 T () N
+(470) # () S 8 T () S
+(def) K
+( case_four\(self\):) p n
+(471) # () S 8 T () S 16 T () S
+(# perpendicular ray) c n
+(472) # () S
+() p 8 T () S 16 T () S
+(if) K
+( self.reflective_tapetum_length > 0:) p n
+(473) # () S 8 T () S 16 T () S 24 T (val = \(self.rhabdom_length * 2\) * self.facet_num) N
+(474) # () S 8 T () S 16 T () S
+(if) K
+( self.reflective_tapetum_length == 0:) p n
+(475) # () S 8 T () S 16 T () S 24 T (val = self.rhabdom_length * self.facet_num) N
+(476) # () S 8 T () S 16 T () S
+(if) K
+( self.shielding_pigment_length > 0:) p n
+(477) # () S 8 T () S 16 T () S 24 T (val = self.rhabdom_length * self.facet_num) N
+(478) # () S 8 T () S 16 T (self.rowdata.append\(val\)) N
+(479) # () S 8 T () S 16 T () S
+(return) K n
+(480) # () S
+() p 8 T () S 16 T () N
+(481) # () S 8 T () S
+(def) K
+( setup_files\(self, sn\):) p n
+(482) # () S 8 T () S 16 T (""") S
+(Setup the filenames and remove old ones if they exist.) str
+(""") p n
+(483) # () S 8 T () S 16 T () S
+(# get current directory and build filenames) c n
+(484) # () S
+() p 8 T () S 16 T (species_name = sn.lower\(\) ) S
+(# always convert to lowercase) c n
+(485) # () S
+() p 8 T () S 16 T (curr_dir = os.getcwd\(\) ) S
+(# get current working directory) c n
+(486) # () S
+() p 8 T () S 16 T (self.outputfile_one = os.path.join\(curr_dir, species_name + ') S
+(_out) str n
+0 T (put_one.csv) S
+('\) ) p
+(# outputfile one) c n
+(487) # () S
+() p 8 T () S 16 T (self.outputfile_two = os.path.join\(curr_dir, species_name + ') S
+(_out) str n
+0 T (put_two.csv) S
+('\) ) p
+(# outputfile two) c n
+(488) # () S
+() p 8 T () S 16 T (self.matrixfile_one = os.path.join\(curr_dir, species_name + ') S
+(_su) str n
+0 T (mmary_one.csv) S
+('\) ) p
+(# matrixfile one) c n
+(489) # () S
+() p 8 T () S 16 T (self.matrixfile_two = os.path.join\(curr_dir, species_name + ') S
+(_su) str n
+0 T (mmary_res.csv) S
+('\) ) p
+(# matrixfile two) c n
+(490) # () S
+() p 8 T () S 16 T (self.matrixfile_three = os.path.join\(curr_dir, species_name + ') S
+(_) str n
+0 T (summary_sen.csv) S
+('\) ) p
+(# matrixfile three) c n
+(491) # () S
+() p 8 T () S 16 T (self.debug_file = os.path.join\(curr_dir, species_name + ') S
+(_debug.tx) str n
+0 T (t) S
+('\) ) p
+(# debug file) c n
+(492) # () S
+() p 8 T () N
+(493) # () S 8 T () S 16 T () S
+(# check if files exist and delete them) c n
+(494) # () S
+() p 8 T () S 16 T () S
+(if) K
+( os.path.exists\(self.outputfile_one\):) p n
+(495) # () S 8 T () S 16 T () S 24 T (os.remove\(self.outputfile_one\)) N
+(496) # () S 8 T () S 16 T () S
+(if) K
+( os.path.exists\(self.outputfile_two\):) p n
+(497) # () S 8 T () S 16 T () S 24 T (os.remove\(self.outputfile_two\)) N
+(498) # () S 8 T () S 16 T () S
+(if) K
+( os.path.exists\(self.matrixfile_one\):) p n
+(499) # () S 8 T () S 16 T () S 24 T (os.remove\(self.matrixfile_one\)) N
+(500) # () S 8 T () S 16 T () S
+(if) K
+( os.path.exists\(self.matrixfile_two\):) p n
+(501) # () S 8 T () S 16 T () S 24 T (os.remove\(self.matrixfile_two\)) N
+(502) # () S 8 T () S 16 T () S
+(if) K
+( os.path.exists\(self.matrixfile_three\):) p n
+(503) # () S 8 T () S 16 T () S 24 T (os.remove\(self.matrixfile_three\)) N
+(504) # () S 8 T () S 16 T () S
+(if) K
+( os.path.exists\(self.debug_file\):) p n
+(505) # () S 8 T () S 16 T () S 24 T (os.remove\(self.debug_file\)) N
+(506) # () S 8 T () S 16 T () S
+(return) K n
+(pathlength.py) (Page 9/13) (Mar 28, 13 9:51) title
+border
+/v 1 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(507) # () p 8 T () S 16 T () N
+(508) # () S 8 T () S
+(def) K
+( write_output\(self, filename, data\):) p n
+(509) # () S 8 T () S 16 T (""") S
+(Write data to an output filename.) str
+(""") p n
+(510) # () S 8 T () S 16 T () S
+(# open file for append and write data) c n
+(511) # () S
+() p 8 T () S 16 T (filehandle = open\(filename, ') S
+(a) str
+('\) ) p
+(# open file in append mode) c n
+(512) # () S
+() p 8 T () S 16 T () S
+(if) K
+( isinstance\(data, list\):) p n
+(513) # () S 8 T () S 16 T () S 24 T (csv_data = ") S
+(,) str
+(".join\(map\(str, data\)\)) p n
+(514) # () S 8 T () S 16 T () S
+(else) K
+(:) p n
+(515) # () S 8 T () S 16 T () S 24 T (csv_data = str\(data\)) N
+(516) # () S 8 T () S 16 T (filehandle.write\(csv_data + ") S
+(\\n) str
+("\) ) p
+(# write output_text string to ) c n
+0 T (file with new line character) N
+(517) # () S
+() p 8 T () S 16 T (filehandle.close\(\) ) S
+(# close file) c n
+(518) # () S
+() p 8 T () S 16 T () S
+(return) K n
+(519) # () N
+(520) # () S
+() p 8 T () S
+(def) K
+( print_output\(self, text\):) p n
+(521) # () S 8 T () S 16 T (""") S
+(Output text and progress information to the screen.) str
+(""") p n
+(522) # () S 8 T () S 16 T () S
+(print) K
+( ") p
+(%d: \(T:%0.2f P:%0.2f\) %s) str
+(" % \(self.iteration_count, self.reflec) p n
+0 T (tive_tapetum_length, self.shielding_pigment_length, text\)) N
+(523) # () S 8 T () S 16 T () S
+(return) K n
+(524) # () S
+() p 8 T () S 16 T () S 24 T () N
+(525) # () S 8 T () S
+(def) K
+( reset_parameters\(self\):) p n
+(526) # () S 8 T () S 16 T (""") S
+(Reset all the parameters to their default values.) str
+(""") p n
+(527) # () S 8 T () S 16 T () S
+(# get stored parameters) c n
+(528) # () S
+() p 8 T () S 16 T (\(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra\) = self.eye_paramete) N
+0 T (rs) N
+(529) # () N
+(530) # () S 8 T () S 16 T () S
+(# reset eye parameters using stored values) c n
+(531) # () S
+() p 8 T () S 16 T (self.num_facets = 0 ) S
+(# num of facets across aperture) c n
+(532) # () S
+() p 8 T () S 16 T (self.rhabdom_width = rw ) S
+(# rhabdom width/diameter) c n
+(533) # () S
+() p 8 T () S 16 T (self.aperture_diameter = ad ) S
+(# aperture diameter) c n
+(534) # () S
+() p 8 T () S 16 T (self.y = 0 ) S
+(# y??? - set to one originally, but we use 0 based in) c n
+0 T (dexing in python) N
+(535) # () S
+() p 8 T () S 16 T (self.facet_width = fw ) S
+(# facet width) c n
+(536) # () S
+() p 8 T () S 16 T (self.eye_diameter = ed ) S
+(# eye diameter) c n
+(537) # () S
+() p 8 T () S 16 T () N
+(538) # () S 8 T () S 16 T () S
+(# do the initial calculations) c n
+(539) # () S
+() p 8 T () S 16 T (self.initial_calculations\(\)) S 48 T () S 56 T () N
+(540) # () S 8 T () S 16 T () S
+(return) K n
+(541) # () S
+() p 8 T () S 16 T () N
+(542) # () S 8 T () S
+(def) K
+( return_parameters\(self\):) p n
+(543) # () S 8 T () S 16 T (""") S
+(Get the original parameters, as stored at the beginning of the program.) str
+(""") p n
+(544) # () S 8 T () S 16 T () S
+(# get stored parameters) c n
+(545) # () S
+() p 8 T () S 16 T (\(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra\) = self.eye_paramete) N
+0 T (rs) N
+(546) # () S 8 T () S 16 T () N
+(547) # () S 8 T () S 16 T () S
+(# return parameters to user) c n
+(548) # () S
+() p 8 T () S 16 T () S
+(return) K
+( rl, rw, ed, fw, ad, cri, rri, bce) p n
+(549) # () N
+(550) # () S 8 T () S
+(def) K
+( summarise_data\(self\):) p n
+(551) # () S 8 T () S 16 T (""") S
+(Summarise the data produced by the calculations in the run_model function.) str
+(""") p n
+(552) # () S 8 T () S 16 T () S
+(# get stored parameters) c n
+(553) # () S
+() p 8 T () S 16 T (\(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra\) = self.eye_paramete) N
+0 T (rs) N
+(554) # () S 8 T () S 16 T () N
+(555) # () S 8 T () S 16 T () S
+(# set required parameters) c n
+(556) # () S
+() p 8 T () S 16 T (self.facet_width = fw) N
+(557) # () S 8 T () S 16 T (self.eye_diameter = ed) N
+(558) # () S 8 T () S 16 T (self.eye_circumference = \(22.0 / 7.0\) * float\(self.eye_diameter\)) N
+0 T ( ) S
+(# need 22.0 / 7.0 here as rounds down to 3 with being an integer) c n
+(559) # () S
+() p 8 T () S 16 T (self.inter_ommatidial_angle = \(self.facet_width / self.eye_circu) N
+0 T (mference\) * float\(360\)) N
+(560) # () S 8 T () S 16 T (self.reflective_tapetum_length = 0) N
+(561) # () S 8 T () S 16 T (self.shielding_pigment_length = 0) N
+(562) # () S 8 T () S 16 T (self.absorbance = 0) N
+(563) # () S 8 T () S 16 T (self.facet = 0) N
+(564) # () S 8 T () S 16 T (self.rhabdom = 0) N
+(pathlength.py) (Page 10/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (5/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (11-12) 6
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(565) # () p 8 T () S 16 T (self.rhabdoms = 21*[0]) N
+(566) # () S 8 T () S 16 T (self.tot = 0) N
+(567) # () S 8 T () S 16 T (self.bx) S 24 T (=) S 32 T (0) N
+(568) # () S 8 T () S 16 T (self.torus = 0) N
+(569) # () S 8 T () S 16 T (self.inci = 0) N
+(570) # () S 8 T () S 16 T (self.area = 0) N
+(571) # () S 8 T () S 16 T (self.arem = 0) N
+(572) # () S 8 T () S 16 T (self.sens = 0) N
+(573) # () S 8 T () S 16 T (self.rhab = 0) N
+(574) # () S 8 T () S 16 T (self.rens = 0) N
+(575) # () S 8 T () S 16 T (self.cc = 0) N
+(576) # () S 8 T () S 16 T (self.dd = 0) N
+(577) # () S 8 T () S 16 T (self.frac = 0) N
+(578) # () S 8 T () S 16 T (self.oab = 0) N
+(579) # () S 8 T () S 16 T (self.matrix_sens = []) N
+(580) # () S 8 T () S 16 T (self.matrix_rhab = []) N
+(581) # () S 8 T () S 16 T (self.matrix_res = []) S 40 T () S 48 T () N
+(582) # () N
+(583) # () S 8 T () S 16 T () S
+(# setup outputfile filehandle) c n
+(584) # () S
+() p 8 T () S 16 T (filehandle = open\(self.outputfile_one, ') S
+(r) str
+('\)) p n
+(585) # () N
+(586) # () S 8 T () S 16 T () S
+(# iterate over file) c n
+(587) # () S
+() p 8 T () S 16 T () S
+(for) K
+( line ) p
+(in) K
+( filehandle.readlines\(\):) p n
+(588) # () S 8 T () S 16 T () S 24 T (line = line.rstrip\(\)) N
+(589) # () S 8 T () S 16 T () S 24 T () S
+(if) K
+( ) p
+(not) K
+( line:) p n
+(590) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(break) K n
+(591) # () S
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( re.match\(") p
+(^\([0-9]+\\.[0-9]{1,}\)$) str
+(", line\):) p n
+(592) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(if) K
+( self.reflective_tapetum_length == 0:) p n
+(593) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.reflective_tapetum_length = float\(l) N
+0 T (ine\)) N
+(594) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(elif) K
+( self.shielding_pigment_length == 0:) p n
+(595) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.shielding_pigment_length = float\(li) N
+0 T (ne\)) N
+(596) # () S 8 T () S 16 T () S 24 T () S
+(elif) K
+( re.match\(") p
+(^\([0-9\\.\\,\\s]+998\)$) str
+(", line\) ) p
+(and) K
+( line != ") p
+(999) str
+(":) p n
+(597) # () S 8 T () S 16 T () S 24 T () S 32 T (text = re.sub\(") S
+(\\s+) str
+(", "", line\)) p n
+(598) # () S 8 T () S 16 T () S 24 T () S 32 T (parts = text.split\(') S
+(,) str
+('\)) p n
+(599) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( part ) p
+(in) K
+( parts:) p n
+(600) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(# check if end of line) c n
+(601) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( part == ") p
+(998) str
+(":) p n
+(602) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.rhabdom = 0) N
+(603) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.bx = 0) N
+(604) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.tot = 0) N
+(605) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.facet += 1) N
+(606) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.area = self.pi * \(self.face) N
+0 T (t + 0.5\) ** 2) N
+(607) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(if) K
+( self.facet == 0:) p n
+(608) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.torus = self.pi * \() N
+0 T (0.5\) ** 2) N
+(609) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.inci = self.pi * \(self.face) N
+0 T (t - 0.5\) ** 2) N
+(610) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.torus = self.area - self.in) N
+0 T (ci) S 8 T () N
+(611) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(if) K
+( self.area > self.arem:) p n
+(612) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.arem = self.area) N
+(613) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+(:) p n
+(614) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (part = float\(part\) ) S
+(# convert to ) c n
+0 T (float for calculations) N
+(615) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(if) K
+( part > 0:) p n
+(616) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.absorbance = 1 - ma) N
+0 T (th.exp\(-0.01 * part\) ) S
+(# calculate absorbance) c n
+(617) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(else) K
+(:) p n
+(618) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.absorbance = 0 ) S
+(# li) c n
+0 T (ght doesn't strike rhabdom) N
+(619) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(if) K
+( self.rhabdom == 0 ) p
+(and) K
+( self.ab) p n
+0 T (sorbance > 0:) S 16 T () S 24 T () S 32 T () S 40 T () N
+(620) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.bx = \(100 * self.ab) N
+(pathlength.py) (Page 11/13) (Mar 28, 13 9:51) title
+border
+/v 1 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+0 T (sorbance\) ) p
+(# axial rhabdom) c n
+(621) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(elif) K
+( self.rhabdom > 0 ) p
+(and) K
+( self.a) p n
+0 T (bsorbance > 0:) N
+(622) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.bx = \(100 * \(\(1 - s) N
+0 T (elf.tot\) * self.absorbance\)\)) N
+(623) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(if) K
+( self.absorbance == 0:) p n
+(624) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (self.bx = 0 ) S
+(# bx = light) c n
+0 T ( not absorbed) N
+(625) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.tot += \(self.bx / 100\)) N
+(626) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.bx *= self.torus) N
+(627) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S
+(for) K
+( i ) p
+(in) K
+( range\(len\(self.rhabdoms) p n
+0 T (\)\):) N
+(628) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S
+(if) K
+( self.rhabdom == i:) p n
+(629) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T (self.rhabdoms[i]) N
+0 T ( += self.bx) N
+(630) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.rhabdom += 1 ) S
+(# increment rh) c n
+0 T (abdom) N
+(631) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.bx = 0) N
+(632) # () S 8 T () S 16 T () S 24 T () S
+(elif) K
+( line == ") p
+(999) str
+(":) p n
+(633) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(# finished block of numbers - work out absorptio) c n
+0 T (n) N
+(634) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T (self.rhabdom = 0) N
+(635) # () S 8 T () S 16 T () S 24 T () S 32 T (self.sens = sum\(self.rhabdoms\)) N
+(636) # () S 8 T () S 16 T () S 24 T () S 32 T (self.rhab = self.rhabdoms[0] / self.sens) N
+(637) # () S 8 T () S 16 T () S 24 T () S 32 T (self.halfway_point = self.rhabdoms[0] / 2) N
+(638) # () S 8 T () S 16 T () S 24 T () S 32 T (self.xz = self.rhabdoms[0]) N
+(639) # () S 8 T () S 16 T () S 24 T () S 32 T (self.yy = self.rhabdoms[1]) N
+(640) # () S 8 T () S 16 T () S 24 T () S 32 T (self.optic_axis = 0) N
+(641) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( i ) p
+(in) K
+( range\(1, 12\):) p n
+(642) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( self.halfway_point < self.rhabdoms[i]) p n
+0 T (:) N
+(643) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.xz = self.rhabdoms[i]) N
+(644) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.yy = self.rhabdoms[i+1]) N
+(645) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (self.optic_axis = self.inter_omm) N
+0 T (atidial_angle * i) N
+(646) # () S 8 T () S 16 T () S 24 T () S 32 T (self.diff = self.xz - self.yy) N
+(647) # () S 8 T () S 16 T () S 24 T () S 32 T (self.hwp = self.xz - self.halfway_point) N
+(648) # () S 8 T () S 16 T () S 24 T () S 32 T (self.frac = self.hwp / \(self.diff + 0.1\)) N
+(649) # () S 8 T () S 16 T () S 24 T () S 32 T (self.oab = self.frac * self.inter_ommatidial_ang) N
+0 T (le) N
+(650) # () S 8 T () S 16 T () S 24 T () S 32 T (self.res = self.oab + self.optic_axis ) S
+(# width at) c n
+0 T ( 50% point) N
+(651) # () S
+() p 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( i ) p
+(in) K
+( range\(16\):) p n
+(652) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.rhabdoms[i] = int\(self.rhabdoms[i]\)) N
+0 T () S 0 T () S 8 T () N
+(653) # () S 8 T () S 16 T () S 24 T () S 32 T () S
+(if) K
+( self.cc == 0:) p n
+(654) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.matrix_sens.append\(0\)) N
+(655) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.matrix_rhab.append\(0\)) N
+(656) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.matrix_res.append\(0\)) N
+(657) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.write_output\(self.matrixfile_three,) N
+0 T ( self.matrix_sens\)) N
+(658) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.write_output\(self.matrixfile_one, s) N
+0 T (elf.matrix_rhab\)) N
+(659) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.write_output\(self.matrixfile_two, s) N
+0 T (elf.matrix_res\)) N
+(660) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.matrix_sens = []) N
+(661) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.matrix_rhab = []) N
+(662) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.matrix_res = []) S 64 T () N
+(663) # () S 8 T () S 16 T () S 24 T () S 32 T (self.matrix_sens.append\(int\(self.sens / self.are) N
+0 T (m\)\)) N
+(664) # () S 8 T () S 16 T () S 24 T () S 32 T (self.matrix_rhab.append\(int\(self.rhab * 100\)\)) N
+(665) # () S 8 T () S 16 T () S 24 T () S 32 T (self.matrix_res.append\(int\(self.res * 200\)\)) N
+(666) # () S 8 T () S 16 T () S 24 T () S 32 T (self.print_output\(") S
+(CC: %s DD: %s) str
+(" % \(str\(self.cc\),) p n
+0 T ( str\(self.dd\)\)\)) N
+(667) # () S 8 T () S 16 T () S 24 T () S 32 T (self.iteration_count += 1) N
+(668) # () S 8 T () S 16 T () S 24 T () S 32 T (self.cc += 1) S 48 T () S 56 T () N
+(pathlength.py) (Page 12/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (6/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (13) 7
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.167824 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(669) # () p 8 T () S 16 T () S 24 T () S 32 T () S
+(if) K
+( self.cc == 11:) p n
+(670) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.dd += 1) N
+(671) # () S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (self.cc = 0) N
+(672) # () S 8 T () S 16 T () S 24 T () S 32 T (self.rhabdoms[0] = 0) N
+(673) # () S 8 T () S 16 T () S 24 T () S 32 T (self.rhabdoms[-1] = 0) N
+(674) # () S 8 T () S 16 T () S 24 T () S 32 T (self.bx = 0) N
+(675) # () S 8 T () S 16 T () S 24 T () S 32 T (self.facet = 0) N
+(676) # () S 8 T () S 16 T () S 24 T () S 32 T (self.reflective_tapetum_length = 0) N
+(677) # () S 8 T () S 16 T () S 24 T () S 32 T (self.shielding_pigment_length = 0) N
+(678) # () S 8 T () S 16 T (self.write_output\(self.matrixfile_three, self.matrix_sens\)) N
+(679) # () S 8 T () S 16 T (self.write_output\(self.matrixfile_one, self.matrix_rhab\)) N
+(680) # () S 8 T () S 16 T (self.write_output\(self.matrixfile_two, self.matrix_res\)) N
+(681) # () S 8 T () S 16 T (self.matrix_sens = []) N
+(682) # () S 8 T () S 16 T (self.matrix_rhab = []) N
+(683) # () S 8 T () S 16 T (self.matrix_res = []) S 40 T () N
+(684) # () S 8 T () S 16 T () N
+(685) # () S 8 T () S 16 T () S
+(# close filehandle) c 40 T () N
+(686) # () S
+() p 8 T () S 16 T (filehandle.close\(\)) N
+(687) # () S 8 T () S 16 T () N
+(688) # () S 8 T () S 16 T () S
+(# let user know we've finished) c n
+(689) # () S
+() p 8 T () S 16 T () S
+(# end of program) c n
+(690) # () S
+() p 8 T () S 16 T (sys.stdout.write\(") S
+(\\a) str
+("\) ) p
+(# beep) c 48 T () N
+(691) # () S
+() p 8 T () S 16 T (sys.stdout.flush\(\) ) S
+(# flush beep) c n
+(692) # () S
+() p 8 T () S 16 T (self.print_output\(") S
+(*** End of program ***) str
+("\)) p n
+(693) # () S 8 T () S 16 T () N
+(694) # () S 8 T () S 16 T () S
+(return) K n
+(695) # () S
+() p 8 T () S 16 T () N
+(696) # () S 8 T () S
+(def) K
+( build_plots\(self\):) p n
+(697) # () S 8 T () S 16 T (""") S
+(This function will produce publication quality plots from the output data.) str
+(""") p n
+(698) # () S 8 T () S 16 T () S
+(return) K n
+(699) # () N
+(700) # () S
+(# check for main subroutine and call it) c n
+(701) # () S
+(if) K
+( __name__ == ") p
+(__main__) str
+(":) p n
+(702) # () S 8 T (sys.exit\(main\(\)\)) N
+(pathlength.py) (Page 13/13) (Mar 28, 13 9:51) title
+border
+grestore
+(Printed by Steve Moss) rhead
+(pathlength.py) (7/7) (Tuesday April 02, 2013) footer
+end % of iso1dict
+pagesave restore
+showpage
+
+%%Trailer
+end
+%%EOF
