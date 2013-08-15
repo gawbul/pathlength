@@ -1,6 +1,6 @@
 # Superposition Eye Path-length Program
 
-A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of POLs through a reflecting superposition compound eye.
+A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of points of light through reflecting superposition compound eyes.
 
 Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
 
