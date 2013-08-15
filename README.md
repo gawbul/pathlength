@@ -1,6 +1,6 @@
 # Superposition Eye Path-length Program
 
-A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of points of light through reflecting superposition compound eyes.
+PathLength implements a ray tracing model to calculate resolution and sensitivity in reflective superposition compound eyes.
 
 Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
 
@@ -121,7 +121,7 @@ This outputs three files (where genus is the name you give when setting up the o
 	genus_summary_res.txt	= Resolution output
 	genus_summary_sen.txt	= Sensitivity output
 
-#Command line options
+# Command line options
 
 The program allows you to input certain command line options when executing the program:
 
@@ -149,3 +149,9 @@ By providing an input file, you can implement a workflow, testing various differ
 	nephropspl,180,25,7800,50,3200,1.34,1.37,18,12.5
 	nephropsfa,180,25,6760,50,3060,1.34,1.37,10,0
 	nephropspa,180,25,6760,50,3060,1.34,1.37,10,12.5
+
+# Citation
+
+If you use this program, please cite:
+
+Gaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Eyes of Nephrops Norvegicus: Optics, Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s). Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Press, 107:148.
