@@ -1,5 +1,4 @@
 ***
-# 
 # **Superposition Eye Path-length Program**
 # 
 ***
@@ -15,11 +14,11 @@ http://about.me/gawbul
 
 gawbul@gmail.com
 
-# 
-# 
+#Installation
+
+Install the following dependencies:
+
 # Usage
-# 
-# 
 
 Run the program using:
 
@@ -115,11 +114,7 @@ This outputs three files (where genus is the name you give when setting up the o
 	genus_summary_res.txt	= Resolution output
 	genus_summary_sen.txt	= Sensitivity output
 
-# 
-# 
-# Command line options
-# 
-# 
+#Command line options
 
 The program allows you to input certain command line options when executing the program:
 
