@@ -1,8 +1,4 @@
-***
-# **Superposition Eye Path-length Program**
-# 
-***
-# 
+# Superposition Eye Path-length Program
 
 A program implementing a ray tracing model to determine the interactions of various parameters and their impacts on the pathlengths of POLs through a reflecting superposition compound eye.
 
@@ -14,24 +10,35 @@ http://about.me/gawbul
 
 gawbul@gmail.com
 
-#Installation
-
-Install the following dependencies:
-
-# Usage
-
-Run the program using:
-
-	python pathlength.py
+# Installation
 
 **N.B.: Implemented using Python 2.7**
 
 **Use the following to check your python version**:
 
-	$ python -V
-	Python 2.7.3
+        $ python -V
+        Python 2.7.3
 
 If you have a version less than 2.7, you can get the latest python version for your system from http://www.python.org/.
+
+To check out from the git repository, get git for your system from [http://git-scm.com](http://git-scm.com) and run the following commands:
+
+	$ git clone git@github.com:gawbul/pathlength.git
+	$ cd pathlength
+
+You can also simply download the pathlength.py file from [https://github.com/gawbul/pathlength/raw/master/pathlength.py](https://github.com/gawbul/pathlength/raw/master/pathlength.py).
+
+# Dependencies
+
+The pathlength.py program requires an additional dependency for plotting the output data. To install matplotlib you should visit the following website.
+
+[http://matplotlib.org/users/installing.html](http://matplotlib.org/users/installing.html)
+ 
+# Usage
+
+Run the program using:
+
+	python pathlength.py
 
 The default settings are located in the main function:
 
