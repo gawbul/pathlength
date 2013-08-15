@@ -30,7 +30,7 @@ You can also simply download the pathlength.py file to a folder of your choosing
 
 # Dependencies
 
-The pathlength.py program requires an additional dependency for plotting the output data. To install **matplotlib** you should visit the following website and follow the instructions their.
+The pathlength.py program requires an additional dependency for plotting the output data. To install **matplotlib** you should visit the following website and follow the instructions there.
 
 [http://matplotlib.org/users/installing.html](http://matplotlib.org/users/installing.html)
  
