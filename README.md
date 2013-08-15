@@ -21,16 +21,16 @@ gawbul@gmail.com
 
 If you have a version less than 2.7, you can get the latest python version for your system from http://www.python.org/.
 
-To check out from the git repository, get git for your system from [http://git-scm.com](http://git-scm.com) and run the following commands:
+To check out pathlength from the git repository, get **git** for your system from [http://git-scm.com](http://git-scm.com) and run the following commands:
 
 	$ git clone git@github.com:gawbul/pathlength.git
 	$ cd pathlength
 
-You can also simply download the pathlength.py file from [https://github.com/gawbul/pathlength/raw/master/pathlength.py](https://github.com/gawbul/pathlength/raw/master/pathlength.py).
+You can also simply download the pathlength.py file to a folder of your choosing from [https://github.com/gawbul/pathlength/raw/master/pathlength.py](https://github.com/gawbul/pathlength/raw/master/pathlength.py).
 
 # Dependencies
 
-The pathlength.py program requires an additional dependency for plotting the output data. To install **matplotlib** you should visit the following website.
+The pathlength.py program requires an additional dependency for plotting the output data. To install **matplotlib** you should visit the following website and follow the instructions their.
 
 [http://matplotlib.org/users/installing.html](http://matplotlib.org/users/installing.html)
  
