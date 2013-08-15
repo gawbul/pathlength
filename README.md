@@ -30,7 +30,7 @@ You can also simply download the pathlength.py file from [https://github.com/gaw
 
 # Dependencies
 
-The pathlength.py program requires an additional dependency for plotting the output data. To install matplotlib you should visit the following website.
+The pathlength.py program requires an additional dependency for plotting the output data. To install **matplotlib** you should visit the following website.
 
 [http://matplotlib.org/users/installing.html](http://matplotlib.org/users/installing.html)
  

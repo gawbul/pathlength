@@ -9,7 +9,7 @@ __author__ = "Steve Moss"
 __copyright__ = "Copyright 1995-2013, Magnus L Johnson and Stephen P Moss"
 __credits__ = ["Steve Moss", "Magnus Johnson", "Genevre Parker"]
 __license__ = "GPLv3"
-__version__ = "0.49b"
+__version__ = "0.50b"
 __maintainer__ = "Steve Moss"
 __email__ = "gawbul@gmail.com"
 __status__ = "beta"
@@ -19,8 +19,7 @@ import os, sys, time, re # needed for os, system, time and regular expression sp
 from datetime import timedelta, date # needed for time specific functions
 import math # needed for math functions (self.pi, cos, sin, tan, atan)
 import getopt # needed to get options from command line
-import rpy2 # needed for plotting subroutines in R
-#import pygame # needed for graphics output *** not yet implemented ***
+import matplotlib # needed for plotting subroutines
 
 # main handler subroutine
 def main():
