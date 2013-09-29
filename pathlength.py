@@ -20,6 +20,7 @@ from datetime import timedelta, date # needed for time specific functions
 import math # needed for math functions (self.pi, cos, sin, tan, atan)
 import getopt # needed to get options from command line
 import matplotlib # needed for plotting subroutines
+import pprint # needed for debugging
 
 # main handler subroutine
 def main():
@@ -48,15 +49,17 @@ def main():
 	# using Nephrops norvegicus flat lateral measurments
 	# see README file or GitHub for information on parameters
 	print "Setting up new superposition eye object..."
-	nephrops_eye = SuperpositionEye("nephrops", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
+	# (sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) 
+	#nephropsfl,180,25,7800,50,3200,1.34,1.37,18,0
+	astacodes_eye = SuperpositionEye("astacodes", 84, 16, 890, 32, 445, 1.34, 1.37, 18, 0) 
 
 	# run the model
 	print "Running the ray tracing model (please wait)..."
-	nephrops_eye.run_model(graphicsopt)
+	astacodes_eye.run_model(graphicsopt)
 	
 	# summarise the data
 	print "Outputting summary data..."
-	nephrops_eye.summarise_data()
+	astacodes_eye.summarise_data()
 	
 	# how long did we take?
 	end = time.time()
@@ -144,7 +147,7 @@ def process_input_file(filename, graphicsflag):
 		if len(parts) == 0:
 			# this just means that there was a blank line?
 			continue
-		if len(parts) != 10:
+		elif len(parts) != 10:
 			print "Error: The number of parameters is incorrect on line %d." % count
 			continue
 		
@@ -153,7 +156,7 @@ def process_input_file(filename, graphicsflag):
 		
 		# create an object
 		print "Setting up new superposition eye object..."		
-		eye_object_from_file = SuperpositionEye(str(sn), int(rl), float(rw), int(ed), float(fw), int(ad), float(cri), float(rri), int(bce), float(pra))
+		eye_object_from_file = SuperpositionEye(str(sn), float(rl), float(rw), float(ed), float(fw), float(ad), float(cri), float(rri), int(bce), float(pra))
 
 		# run the model	
 		print "Running the ray tracing model (please wait)..."
@@ -177,6 +180,7 @@ class SuperpositionEye():
 	def __init__(self, sn, rl, rw, ed, fw, ad, cri, rri, bce, pra):
 		"""Initialises the default variables of a new SuperpositionEye object."""
 		# store parameters incase needed in future
+		
 		self.eye_parameters = [sn, rl, rw, ed, fw, ad, cri, rri, bce, pra]
 		
 		# set variables for output data
@@ -187,7 +191,7 @@ class SuperpositionEye():
 		
 		# set variables for calculations
 		self.pi = math.pi # define self.pi
-		self.conv = self.pi / 180 # convert radians to degrees (1 degree = self.pi / 180 radians)
+		self.conv = self.pi / 180.0 # convert radians to degrees (1 degree = self.pi / 180 radians)
 		self.proximal_rhabdom_angle = pra # used for pointy rhabdoms
 		
 		# set files for output data
@@ -202,14 +206,14 @@ class SuperpositionEye():
 		self.blur_circle_extent = bce # blur circle extent
 		
 		# input data - eye parameters
-		self.rhabdom_length = float(rl) # rhabdom length
+		self.rhabdom_length = rl # rhabdom length
 		self.increment_amount = self.rhabdom_length / 10 # amount to increment tapetum or pigment
 		self.reflective_tapetum_length = 0.0 # extent of tapetal pigment set to zero
 
 		self.num_facets = 0 # num of facets across aperture
 		self.rhabdom_width = rw # rhabdom width/diameter
 		self.aperture_diameter = ad # aperture diameter
-		self.y = 0 # y??? - set to one originally, but we use 0 based indexing in python
+		self.y = 1 # y??? - set to one originally
 		self.facet_width = fw # facet width
 		self.eye_diameter = ed # eye diameter
 		
@@ -232,8 +236,8 @@ class SuperpositionEye():
 		self.aperture_diameter = (self.ac / 360) * self.eye_circumference # change aperture diameter
 		self.optical_axis = (self.facet_width / self.eye_circumference) * 360 # calculate optical axis from eye circumference and facet width
 
-		self.facet_num = 1 # facet number
-		self.num_facets = int(self.aperture_diameter / self.facet_width) # num of facets across aperture
+		self.facet_num = 1.0 # facet number
+		self.num_facets = round(self.aperture_diameter / self.facet_width) # num of facets across aperture
 		self.rhabdom_radius = self.rhabdom_width / 2 # rhabdom radius
 		self.old_rhabdom_length = self.rhabdom_length # old rhabdom length
 		self.max_rhabdom_length = self.rhabdom_length # store rhabdom length for main loop
@@ -242,7 +246,10 @@ class SuperpositionEye():
 
 		# angle of total internal reflection (rhabdoms)
 		self.cytoplasm_ri = cri # cytoplasm refractive index
-		self.rhabdom_ri = rri # rhabdom refractive index 
+		self.rhabdom_ri = rri # rhabdom refractive index
+		#self.adj = math.sqrt((self.rhabdom_ri ** 2) - (self.cytoplasm_ri ** 2))
+		#self.cb = math.atan(self.cytoplasm_ri / self.adj)
+		#self.critical_angle = 90 - (self.cb / self.conv) # critical angle below which light is totally internally reflected within rhabdom
 		self.snells_law = math.asin(self.cytoplasm_ri / self.rhabdom_ri) / self.conv # calculate angle for total internal reflection using Snell's law
 		self.critical_angle = 90 - self.snells_law # critical angle below which light is totally internally reflected within rhabdom
 		self.mx = math.sqrt((self.rhabdom_length ** 2) + (self.rhabdom_radius ** 2)) # mx???
@@ -267,86 +274,89 @@ class SuperpositionEye():
 		# main program loop	
 		while True:
 			# calculate prox-dist length of first pass
-			if self.boa > self.critical_angle and self.boa < 25 and self.cz == 0:
+			if self.boa > self.critical_angle and self.cz == 0:
 				# change shape of proximal portion of the rhabdom
 				self.boa -= self.proximal_rhabdom_angle
 			if self.inter_ommatidial_angle == 0:
 				# ray absorbed by proximal shielding pigment
 				self.case_four()
 			else:
-				self.y = self.rhabdom_radius / math.tan(self.boa * self.conv)
+				self.y = self.rhabdom_radius / abs(math.tan(self.boa * self.conv))
 				if self.y >= self.rhabdom_length:
 					# ray reflected off base of rhabdom by tapetum
 					self.case_three()
-				elif self.y > self.rhabdom_length - self.shielding_pigment_length or self.y > self.rhabdom_length - self.reflective_tapetum_length or self.boa < self.critical_angle:
+				elif self.y > (self.rhabdom_length - self.shielding_pigment_length) or self.y > (self.rhabdom_length - self.reflective_tapetum_length) or self.boa < self.critical_angle:
 					self.case_two()
 				else:
 					# light passes through rhabdom
 					self.case_one()
 					# goto 1002
 					if self.rhabdom_length <= self.reflective_tapetum_length or self.rhabdom_length <= self.shielding_pigment_length:
+						# jump to set next parameters
 						pass
 					else:
-						# *** call display graphics here ***
+						# skip to beginning of while lopp
 						continue
 
+			# set parameters for next incident facet
 			self.current_facet += 1
-			self.rhabdom_radius = self.rhabdom_width / 2				
+			self.rhabdom_radius = self.rhabdom_width / 2
 			self.rhabdom_length = self.old_rhabdom_length
 			self.inter_ommatidial_angle += self.optical_axis
 			self.cz = 0 # set CZ as false
 
 			# row complete append 998 and output to file
-			self.col_total = len(self.rowdata)
 			self.rowdata.append(998)
 			self.write_output(self.outputfile_one, self.rowdata)
 
 			# append row to output_data for outputfile_two
-			self.output_data.append(self.rowdata[0:-1])
+			self.output_data.append(self.rowdata)#[0:-1])
 			self.row_total = len(self.output_data)
+			self.col_total = len(self.rowdata)
 
 			# clear self.rowdata
 			self.rowdata = []		
 			
 			# account for refraction at cornea
-			if self.inter_ommatidial_angle < 60:
-				self.boa = (self.inter_ommatidial_angle * 0.8677) + 3.38		
-			if self.inter_ommatidial_angle < 50:
-				self.boa = (self.inter_ommatidial_angle * 0.9196) + 0.8676		
-			if self.inter_ommatidial_angle < 35:
-				self.boa = (self.inter_ommatidial_angle * 0.9407) + 0.1648		
 			if self.inter_ommatidial_angle < 15:
 				self.boa = (self.inter_ommatidial_angle * 0.9494) + 0.004667
-			if self.inter_ommatidial_angle > 60:
+			elif self.inter_ommatidial_angle < 35:
+				self.boa = (self.inter_ommatidial_angle * 0.9407) + 0.1648
+			elif self.inter_ommatidial_angle < 50:
+				self.boa = (self.inter_ommatidial_angle * 0.9196) + 0.8676
+			elif self.inter_ommatidial_angle < 60:
+				self.boa = (self.inter_ommatidial_angle * 0.8677) + 3.38		
+			else:
 				self.print_output("*** UNREAL ANGLE AT CORNEA ***")
 				self.write_output(self.outputfile_one, "UNREAL ANGLE AT CORNEA")
 
 			# light loss at cone due to angle of incidence
-			self.cc = self.facet_width / math.tan(self.boa * self.conv) # CC???		
-			if self.cc > (self.facet_width * 2):
+			self.cc = self.facet_width / abs(math.tan(self.boa * self.conv)) # CC???		
+			if self.cc > self.facet_width * 2.0:
 				self.fw	= math.cos(self.inter_ommatidial_angle * self.conv) * self.facet_width # FW???
 			else:
-				self.ll = ((2 * self.cc) - (2 * self.facet_width))
+				self.ll = (2.0 * self.cc) - (2.0 * self.facet_width)
 				self.fw = math.sin(self.inter_ommatidial_angle * self.conv) * self.ll
-			self.facet_num = self.fw / self.facet_width
-					
+			self.facet_num = math.ceil(self.fw / self.facet_width)
+
 			# account for change in angle between adjacent rhabdoms
 			self.fd = self.num_facets / self.blur_circle_extent # FD??? - this is used to divide the aperture up 
 			# if current facet is outside edge of eyeshine patch then break out of for loop
 			# otherwise check where the current facet is and transfer POL to appropriate rhabdom accordingly
-			self.nx = 1
+			self.nx = 0
 			for i in range(self.blur_circle_extent):
+				self.nx += 1
 				if self.current_facet >= self.num_facets:
 					pass
-				elif self.current_facet >= (self.fd * self.nx):
+				elif self.current_facet > (self.fd * self.nx):
 					self.boa += self.optical_axis
 					self.rowdata.append(0)
-				self.nx += 1
 
 			# check to see if edge of eyeshine patch has been reached
 			if self.current_facet >= self.num_facets:
 				pass
 			else:
+				# skip rest of statements
 				continue
 			
 			# iterate over output data
@@ -356,15 +366,16 @@ class SuperpositionEye():
 						for i in range(self.col_total - len(self.output_data[row])):
 							self.output_data[row].append(0)
 					# check all rows 
-					if self.output_data[row][col] > 0:
-						self.ab[col] = 1 - math.exp(-0.0067 * self.output_data[row][col])
-					elif self.output_data[row][col] == 0:
+					if self.output_data[row][col] == 0:
 						self.ab[col] = 0
+					elif self.output_data[row][col] > 0:
+						self.ab[col] = 1 - math.exp(-0.0067 * self.output_data[row][col])
+					
 					if col == 0 and self.ab[col] > 0:
 						self.bx = 100 * self.ab[col]
-					if col > 0 and self.ab[col] > 0:
+					elif col > 0 and self.ab[col] > 0:
 						self.bx = 100 * ((1 - self.tot) * self.ab[col])
-					if self.ab[col] == 0:
+					elif self.ab[col] == 0:
 						self.bx = 0
 					self.tot += (self.bx / 100)
 					self.aa[col] += self.bx
@@ -396,7 +407,7 @@ class SuperpositionEye():
 				sys.stdout.flush() # flush beep
 				break
 			elif self.reflective_tapetum_length >= self.max_rhabdom_length and self.shielding_pigment_length < self.max_rhabdom_length:
-				self.reflective_tapetum_length = 0
+				self.reflective_tapetum_length = 0.0
 				self.shielding_pigment_length += self.increment_amount
 			else:
 				self.reflective_tapetum_length += self.increment_amount			
@@ -417,16 +428,17 @@ class SuperpositionEye():
 		
 	def case_one(self):
 		# no reflection - light passes through rhabdom
-		self.x = self.rhabdom_radius / math.sin(self.boa * self.conv)
+		self.x = self.rhabdom_radius / abs(math.sin(self.boa * self.conv))
 		self.rowdata.append(self.x * self.facet_num)
 		self.rhabdom_length -= self.y
 		self.boa += self.optical_axis
-		self.cz = 1 # set CZ to true								
-		
+		self.cz = 1 # set CZ to true				
+		return
+
 	def case_two(self):
 		# reflection from edge
-		self.x = self.rhabdom_radius / math.sin(self.boa * self.conv)
-		self.z = (self.rhabdom_length - self.y) / math.cos(self.boa * self.conv)
+		self.x = self.rhabdom_radius / abs(math.sin(self.boa * self.conv))
+		self.z = (self.rhabdom_length - self.y) / abs(math.cos(self.boa * self.conv))
 		
 		if self.z > self.x:
 			self.z = self.x
@@ -450,19 +462,17 @@ class SuperpositionEye():
 		# bounce off base
 		if self.y == self.rhabdom_length:
 			self.x = self.mx
-		if self.y > self.rhabdom_length:
-			self.x = self.rhabdom_length / math.cos(self.boa * self.conv)
+		elif self.y > self.rhabdom_length:
+			self.x = self.rhabdom_length / abs(math.cos(self.boa * self.conv))
 		if self.x > self.old_rhabdom_length:
 			self.v = self.x
-		if self.x < self.old_rhabdom_length:
+		elif self.x < self.old_rhabdom_length:
 			self.v = self.old_rhabdom_length
 		
-		if self.reflective_tapetum_length == 0:
+		if self.reflective_tapetum_length == 0 or self.shielding_pigment_length > 0:
 			val = self.x * self.facet_num
-		if self.reflective_tapetum_length > 0:
+		elif self.reflective_tapetum_length > 0:
 			val = (self.x + self.v) * self.facet_num
-		if self.shielding_pigment_length > 0:
-			val = self.x * self.facet_num
 		self.rowdata.append(val)
 		return
 			
@@ -470,10 +480,9 @@ class SuperpositionEye():
 		# perpendicular ray
 		if self.reflective_tapetum_length > 0:
 			val = (self.rhabdom_length * 2) * self.facet_num
-		if self.reflective_tapetum_length == 0:
+		elif self.reflective_tapetum_length == 0 or self.shielding_pigment_length > 0:
 			val = self.rhabdom_length * self.facet_num
-		if self.shielding_pigment_length > 0:
-			val = self.rhabdom_length * self.facet_num
+		# append to row data for output
 		self.rowdata.append(val)
 		return
 		
@@ -530,7 +539,7 @@ class SuperpositionEye():
 		self.num_facets = 0 # num of facets across aperture
 		self.rhabdom_width = rw # rhabdom width/diameter
 		self.aperture_diameter = ad # aperture diameter
-		self.y = 0 # y??? - set to one originally, but we use 0 based indexing in python
+		self.y = 1 # y??? - set to one originally
 		self.facet_width = fw # facet width
 		self.eye_diameter = ed # eye diameter
 		
@@ -556,14 +565,14 @@ class SuperpositionEye():
 		self.eye_diameter = ed
 		self.eye_circumference = (22.0 / 7.0) * float(self.eye_diameter) # need 22.0 / 7.0 here as rounds down to 3 with being an integer
 		self.inter_ommatidial_angle = (self.facet_width / self.eye_circumference) * float(360)
-		self.reflective_tapetum_length = 0
-		self.shielding_pigment_length = 0
-		self.absorbance = 0
+		self.reflective_tapetum_length = 0.0
+		self.shielding_pigment_length = 0.0
+		self.absorbance = 0.0
 		self.facet = 0
 		self.rhabdom = 0
 		self.rhabdoms = 21*[0]
 		self.tot = 0
-		self.bx	=	0
+		self.bx	= 0
 		self.torus = 0
 		self.inci = 0
 		self.area = 0
@@ -583,16 +592,18 @@ class SuperpositionEye():
 		filehandle = open(self.outputfile_one, 'r')
 
 		# iterate over file
+		count = 0
 		for line in filehandle.readlines():
+			count += 1
 			line = line.rstrip()
 			if not line:
 				break
-			if re.match("^([0-9]+\.[0-9]{1,})$", line):
+			if re.match("^([0-9]+\.[0-9]{1,})$", line) or line == "0":
 				if self.reflective_tapetum_length == 0:
 					self.reflective_tapetum_length = float(line)
 				elif self.shielding_pigment_length == 0:
 					self.shielding_pigment_length = float(line)
-			elif re.match("^([0-9\.\,\s]+998)$", line) and line != "999":
+			elif re.match("^([0-9\.\,\-\s]+998)$", line) and line != "999":
 				text = re.sub("\s+", "", line)
 				parts = text.split(',')
 				for part in parts:
@@ -674,6 +685,9 @@ class SuperpositionEye():
 				self.facet = 0
 				self.reflective_tapetum_length = 0
 				self.shielding_pigment_length = 0
+			else:
+				print count, ": ", line
+				print "Error parsing output file one - please report."
 		self.write_output(self.matrixfile_three, self.matrix_sens)
 		self.write_output(self.matrixfile_one, self.matrix_rhab)
 		self.write_output(self.matrixfile_two, self.matrix_res)
@@ -694,6 +708,15 @@ class SuperpositionEye():
 		
 	def build_plots(self):
 		"""This function will produce publication quality plots from the output data."""
+		return
+
+	def dump_debug_values(self, case=None):
+		"""This function will dump all the variables to the debug file and exit the program."""
+		self.write_output(self.debug_file, "case " + str(case))
+		fh = open(self.debug_file, "a")
+		pp = pprint.PrettyPrinter(indent=4, stream=fh)
+		pp.pprint(self.__dict__)
+		sys.exit()
 		return
 
 # check for main subroutine and call it
