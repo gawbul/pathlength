@@ -1,3 +1,10 @@
 .DS_Store
 .gitignore
+*.csv
+*.xlsx
 testing/*
+tiff/
+Paper/
+Storage/
+astacodes*
+*_debug.txt

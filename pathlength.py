@@ -50,7 +50,7 @@ def main():
 	# see README file or GitHub for information on parameters
 	print "Setting up new superposition eye object..."
 	# (sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) 
-	#nephropsfl,180,25,7800,50,3200,1.34,1.37,18,0
+	# nephropsfl,180,25,7800,50,3200,1.34,1.37,18,0
 	astacodes_eye = SuperpositionEye("astacodes", 84, 16, 890, 32, 445, 1.34, 1.37, 18, 0) 
 
 	# run the model
@@ -156,7 +156,7 @@ def process_input_file(filename, graphicsflag):
 		
 		# create an object
 		print "Setting up new superposition eye object..."		
-		eye_object_from_file = SuperpositionEye(str(sn), float(rl), float(rw), float(ed), float(fw), float(ad), float(cri), float(rri), int(bce), float(pra))
+		eye_object_from_file = SuperpositionEye(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra)
 
 		# run the model	
 		print "Running the ray tracing model (please wait)..."
@@ -181,6 +181,10 @@ class SuperpositionEye():
 		"""Initialises the default variables of a new SuperpositionEye object."""
 		# store parameters incase needed in future
 		
+		# for the purpose of the calculates there is no type casting
+		# need to ensure getting floats in when need to
+		(sn, rl, rw, ed, fw, ad, cri, rri, bce, pra) = [str(sn), float(rl), float(rw), float(ed), float(fw), float(ad), float(cri), float(rri), int(bce), float(pra)]
+
 		self.eye_parameters = [sn, rl, rw, ed, fw, ad, cri, rri, bce, pra]
 		
 		# set variables for output data
@@ -207,19 +211,19 @@ class SuperpositionEye():
 		
 		# input data - eye parameters
 		self.rhabdom_length = rl # rhabdom length
-		self.increment_amount = self.rhabdom_length / 10 # amount to increment tapetum or pigment
+		self.increment_amount = self.rhabdom_length / 10.0 # amount to increment tapetum or pigment
 		self.reflective_tapetum_length = 0.0 # extent of tapetal pigment set to zero
 
 		self.num_facets = 0 # num of facets across aperture
 		self.rhabdom_width = rw # rhabdom width/diameter
 		self.aperture_diameter = ad # aperture diameter
-		self.y = 1 # y??? - set to one originally
+		self.y = 1.0 # y??? - set to one originally
 		self.facet_width = fw # facet width
 		self.eye_diameter = ed # eye diameter
 		
 		# undeclared in original code
-		self.boa = 0 # boa???
-		self.tot = 0 # tot???
+		self.boa = 0.0 # boa???
+		self.tot = 0.0 # tot???
 		self.col_total = 0 # total rhaboms?
 		self.row_total = 0 # total facets?
 						
@@ -259,7 +263,6 @@ class SuperpositionEye():
 		self.write_output(self.outputfile_one, self.reflective_tapetum_length) # write tapetum length to output file
 		
 		self.cz = 0	# increases angle of acceptance of rhabdom - initialise to false
-		
 		return
 																					
 	def run_model(self, graphicsflag):
@@ -337,7 +340,11 @@ class SuperpositionEye():
 			else:
 				self.ll = (2.0 * self.cc) - (2.0 * self.facet_width)
 				self.fw = math.sin(self.inter_ommatidial_angle * self.conv) * self.ll
-			self.facet_num = math.ceil(self.fw / self.facet_width)
+			self.facet_num = self.fw / self.facet_width
+			# this shouldn't happen, but just in case
+			if self.facet_num > 1.0:
+				print "WARNING: facet_num changed to 1.00 from %0.2f." % self.facet_num
+				self.facet_num == 1.0
 
 			# account for change in angle between adjacent rhabdoms
 			self.fd = self.num_facets / self.blur_circle_extent # FD??? - this is used to divide the aperture up 
@@ -359,6 +366,9 @@ class SuperpositionEye():
 				# skip rest of statements
 				continue
 			
+			print self.row_total
+			print self.col_total
+			
 			# iterate over output data
  			for col in range(self.col_total):
  				for row in range(self.row_total):
@@ -367,29 +377,30 @@ class SuperpositionEye():
 							self.output_data[row].append(0)
 					# check all rows 
 					if self.output_data[row][col] == 0:
-						self.ab[col] = 0
+						self.ab[col] = 0.0
 					elif self.output_data[row][col] > 0:
-						self.ab[col] = 1 - math.exp(-0.0067 * self.output_data[row][col])
-					
+						self.ab[col] = 1.0 - math.exp(-self.output_data[row][col] * 0.0067)
+					print 1.0 - math.exp(-self.output_data[row][col] * 0.0067)
+
 					if col == 0 and self.ab[col] > 0:
-						self.bx = 100 * self.ab[col]
+						self.bx = 100.0 * self.ab[col]
 					elif col > 0 and self.ab[col] > 0:
-						self.bx = 100 * ((1 - self.tot) * self.ab[col])
+						self.bx = 100.0 * ((1.0 - self.tot) * self.ab[col])
 					elif self.ab[col] == 0:
-						self.bx = 0
-					self.tot += (self.bx / 100)
+						self.bx = 0.0
+					self.tot += (self.bx / 100.0)
 					self.aa[col] += self.bx
-					self.bx = 0
+					self.bx = 0.0
 					self.write_output(self.debug_file, [col + 1, self.aa[col], self.ab[col], row + 1])
-				self.bx = 0
-				self.tot = 0
+				self.bx = 0.0
+				self.tot = 0.0
 		
 			self.x = 0
 			output_tmp = []
 			output_tmp.append(self.reflective_tapetum_length)
 			output_tmp.append(self.shielding_pigment_length)
 			for i in range(self.col_total):
-				self.aa[i] = int(self.aa[i] / self.row_total)
+				self.aa[i] = self.aa[i] / self.row_total
 				output_tmp.append(self.aa[i])
 				self.aa[i] = 0
 			output_tmp.append(999)	
@@ -421,7 +432,8 @@ class SuperpositionEye():
 			
 			# reset parameters
 			self.reset_parameters()
-			
+			sys.exit()
+
 		# print end_time
 		end_time = time.time()
 		self.write_output(self.debug_file, "\n%s\n*******************" % date.fromtimestamp(end_time).strftime("%d/%m/%Y %H:%M:%S"))
@@ -471,17 +483,17 @@ class SuperpositionEye():
 		
 		if self.reflective_tapetum_length == 0 or self.shielding_pigment_length > 0:
 			val = self.x * self.facet_num
-		elif self.reflective_tapetum_length > 0:
+		else:
 			val = (self.x + self.v) * self.facet_num
 		self.rowdata.append(val)
 		return
 			
 	def case_four(self):
 		# perpendicular ray
-		if self.reflective_tapetum_length > 0:
-			val = (self.rhabdom_length * 2) * self.facet_num
-		elif self.reflective_tapetum_length == 0 or self.shielding_pigment_length > 0:
+		if self.reflective_tapetum_length == 0 or self.shielding_pigment_length > 0:
 			val = self.rhabdom_length * self.facet_num
+		else:
+			val = (self.rhabdom_length * 2.0) * self.facet_num
 		# append to row data for output
 		self.rowdata.append(val)
 		return
