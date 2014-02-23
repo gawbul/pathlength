@@ -365,10 +365,7 @@ class SuperpositionEye():
 			else:
 				# skip rest of statements
 				continue
-			
-			print self.row_total
-			print self.col_total
-			
+						
 			# iterate over output data
  			for col in range(self.col_total):
  				for row in range(self.row_total):
@@ -432,7 +429,6 @@ class SuperpositionEye():
 			
 			# reset parameters
 			self.reset_parameters()
-			sys.exit()
 
 		# print end_time
 		end_time = time.time()
@@ -441,7 +437,7 @@ class SuperpositionEye():
 	def case_one(self):
 		# no reflection - light passes through rhabdom
 		self.x = self.rhabdom_radius / abs(math.sin(self.boa * self.conv))
-		self.rowdata.append(self.x * self.facet_num)
+		self.rowdata.append("C1: " + str(self.x * self.facet_num))
 		self.rhabdom_length -= self.y
 		self.boa += self.optical_axis
 		self.cz = 1 # set CZ to true				
@@ -467,7 +463,7 @@ class SuperpositionEye():
 			val = (self.x + self.z) * self.facet_num
 		if self.shielding_pigment_length > (self.rhabdom_length - self.y):
 			val = self.x * self.facet_num
-		self.rowdata.append(val)
+		self.rowdata.append("C2: " + str(val))
 		return
 				
 	def case_three(self):
@@ -485,7 +481,7 @@ class SuperpositionEye():
 			val = self.x * self.facet_num
 		else:
 			val = (self.x + self.v) * self.facet_num
-		self.rowdata.append(val)
+		self.rowdata.append("C3: " + str(val))
 		return
 			
 	def case_four(self):
@@ -495,7 +491,7 @@ class SuperpositionEye():
 		else:
 			val = (self.rhabdom_length * 2.0) * self.facet_num
 		# append to row data for output
-		self.rowdata.append(val)
+		self.rowdata.append("C4: " + str(val))
 		return
 		
 	def setup_files(self, sn):
