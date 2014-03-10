@@ -238,7 +238,7 @@ class SuperpositionEye():
 		self.da = math.sqrt((self.eye_radius ** 2) - (self.aperture_radius ** 2)) # DA???
 		self.ac = math.atan(self.aperture_radius / self.da) / self.conv	# AC???
 		self.aperture_diameter = (self.ac / 360) * self.eye_circumference # change aperture diameter
-		self.optical_axis = (self.facet_width / self.eye_circumference) * 360 # calculate optical axis from eye circumference and facet width
+		self.ommatidial_angle = (self.facet_width / self.eye_circumference) * 360 # calculate ommatidial angle from eye circumference and facet width
 
 		self.facet_num = 1.0 # facet number
 		self.num_facets = round(self.aperture_diameter / self.facet_width) # num of facets across aperture
@@ -305,7 +305,7 @@ class SuperpositionEye():
 			self.current_facet += 1
 			self.rhabdom_radius = self.rhabdom_width / 2
 			self.rhabdom_length = self.old_rhabdom_length
-			self.inter_ommatidial_angle += self.optical_axis
+			self.inter_ommatidial_angle += self.ommatidial_angle
 			self.cz = 0 # set CZ as false
 
 			# row complete append 998 and output to file
@@ -356,7 +356,7 @@ class SuperpositionEye():
 				if self.current_facet >= self.num_facets:
 					pass
 				elif self.current_facet > (self.fd * self.nx):
-					self.boa += self.optical_axis
+					self.boa += self.ommatidial_angle
 					self.rowdata.append(0)
 
 			# check to see if edge of eyeshine patch has been reached
@@ -439,7 +439,7 @@ class SuperpositionEye():
 		self.x = self.rhabdom_radius / abs(math.sin(self.boa * self.conv))
 		self.rowdata.append("C1: " + str(self.x * self.facet_num))
 		self.rhabdom_length -= self.y
-		self.boa += self.optical_axis
+		self.boa += self.ommatidial_angle
 		self.cz = 1 # set CZ to true				
 		return
 
