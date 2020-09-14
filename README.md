@@ -1,154 +1,237 @@
-# Superposition Eye Path-length Program
+# Superposition Eye Pathlength Program
 
-PathLength implements a ray tracing model to calculate resolution and sensitivity in reflective superposition compound eyes.
+PathLength implements a ray tracing model to calculate the resolution and sensitivity of reflective superposition compound eyes.
 
-Original QBASIC version by Magnus L Johnson and Genevre Parker, 1995
+Original QBASIC version by Dr Magnus L Johnson and Genevre Parker, 1995
 
-Python rewrite by Stephen P Moss, 2012-2013
+Golang rewrite by Dr Stephen P Moss, 2020
 
-http://about.me/gawbul
+Author: Dr Stephen P Moss
 
-gawbul@gmail.com
+Website: [https://www.gawbul.io](https://www.gawbul.io)
 
-# Installation
+Email: gawbul@gmail.com
 
-**N.B.: Implemented using Python 2.7**
+# Install Go compiler
 
-**Use the following to check your python version**:
+## macOS
+```bash
+# Install brew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 
-        $ python -V
-        Python 2.7.3
+# Install Golang
+brew install go@1.15
+```
 
-If you have a version less than 2.7, you can get the latest python version for your system from http://www.python.org/.
+## Linux (Debian/Ubuntu)
+```bash
+# Download tarball
+wget -P /tmp https://dl.google.com/go/go1.15.1.linux-amd64.tar.gz
 
-To check out pathlength from the git repository, get **git** for your system from [http://git-scm.com](http://git-scm.com) and run the following commands:
+# Extract tarball
+sudo tar -zxvf /tmp/go1.15.1.linux-amd64.tar.gz -C /usr/local
 
-	$ git clone git@github.com:gawbul/pathlength.git
-	$ cd pathlength
+# Setup environment
+echo "export GOROOT=/usr/local/go" >> ~/.profile
+echo "export GOPATH=$HOME/go" >> ~/.profile
+echo "export PATH=$GOPATH/bin:$GOROOT/bin:$PATH" >> ~/.profile
 
-You can also simply download the pathlength.py file to a folder of your choosing from [https://github.com/gawbul/pathlength/raw/master/pathlength.py](https://github.com/gawbul/pathlength/raw/master/pathlength.py).
+# Source environment
+source ~/.profile
+```
 
-# Dependencies
+# Install dependencies
 
-The pathlength.py program requires an additional dependency for plotting the output data. To install **matplotlib** you should visit the following website and follow the instructions there.
+## macOS
+```bash
+# Install git
+brew install git
 
-[http://matplotlib.org/users/installing.html](http://matplotlib.org/users/installing.html)
+# Install Go packages
+go get github.com/stretchr/testify
+```
+
+## Linux (Debian/Ubuntu)
+```bash
+# Install git
+sudo apt-get update
+sudo apt-get install git
+
+# Install Go packages
+go get github.com/stretchr/testify
+```
+
+# Checkout source code
+
+```bash
+# Create and change to projects directory
+mkdir -p ~/projects
+cd ~/projects
+
+# Clone the GitHub repository
+git clone git@github.com:gawbul/pathlength.git
+```
  
 # Usage
 
-Run the program using:
+## Run the program from source
+```bash
+cd ~/projects/pathlength
+go run .
+```
+Outputs:
+```
+Usage:
+  -citation
+        Display the citation for the program
+  -filename string
+        Input filename in CSV format
+  -license
+        Display the license for the program
+  -usage
+        Display program usage
+exit status 1
+```
 
-	python pathlength.py
+## Run the test suite
+```bash
+cd ~/projects/pathlength
+go test -v
+```
+Outputs:
+```
+=== RUN   TestParseParameters
+--- PASS: TestParseParameters (0.00s)
+PASS
+ok      _/Users/stephenmoss/Dropbox/Code/pathlength     0.320s
+```
 
-The default settings are located in the main function:
+## Build the program
+```bash
+cd ~/projects/pathlength
+go build
+chmod +x pathlength
+```
 
-	# main handler subroutine
-	def main():
-		# check what the program arguments are and assign appropriate variables
-		opts_array = handle_options(sys.argv[1:])
-		(input_file, graphicsopt) = opts_array
-	
-		# check whether the user provide an input filename
-		if input_file:
-			# process file
-			process_input_file(input_file, graphicsopt)
-			sys.exit()
-		else:
-			# just continue with inline parameters below
-			pass
-	
-		# show startup information
-		startup()
+## Display program usage
+```bash
+./pathlength -usage
+```
+Outputs:
+```
+Usage:
+  -citation
+        Display the citation for the program
+  -filename string
+        Input filename in CSV format
+  -license
+        Display the license for the program
+  -usage
+        Display program usage
+  -version
+        Display program version
+```
+*Also displays if you don't pass in any arguments, as it expects a filename as input.*
 
-		# track how long it takes
-		start = time.time()
-		
-		# if not using an input file for the parameters you can set them manually as follows
-		# setup nephrops_eye as new SuperpositionEye object - with relevant parameters passed	
-		# using Nephrops norvegicus flat lateral measurments
-		# see README file or GitHub for information on parameters
-		print "Setting up new superposition eye object..."
-		nephrops_eye = SuperpositionEye("nephrops", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
+## Display citation information
+```bash
+./pathlength -citation
+```
+Outputs:
+```
+Gaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Eyes of Nephrops Norvegicus:
+Optics, Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s).
+Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Press, 107:148.
+```
 
-		# run the model
-		print "Running the ray tracing model (please wait)..."
-		nephrops_eye.run_model(graphicsopt)
-	
-		# summarise the data
-		print "Outputting summary data..."
-		nephrops_eye.summarise_data()
-	
-		# how long did we take?
-		end = time.time()
-		took = end - start
-		print "\nFinished in %s seconds.\n" % timedelta(seconds=took)
+## Display license information
+```bash
+./pathlength -license
+```
+Outputs:
+```
+pathlength - calculates resolution and sensitivity in reflective superposition compound eyes.
 
-To setup a new eye object you need to do the following before executing the program:
+Copyright (C) 2020 Dr Stephen P Moss
 
-	eye_object = SuperpositionEye("genus", 180, 25, 7800, 50, 3200, 1.34, 1.37, 18, 0) 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-Where the parameters equal:
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-	"genus"	=	A prefix for the output filenames e.g. organism genus name
-	180 	=	Rhabdom Length
-	25 	=	Rhabdom Width
-	7800 	=	Eye Diameter
-	50 	=	Facet Width
-	3200		=	Aperture Diameter
-	1.34	=	Cytoplasm Refractive Index
-	1.37	=	Rhabdom Refractive Index
-	18		=	Blur Circle Extent
-	0		=	Proximal Rhabdom Angle (used to create pointy-ended rhabdoms)
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>
+```
 
-**N.B.: The genus name is NOT case sensitive. It is always converted to lowercase to avoid file access issues.**
+## Display program version
+```bash
+./pathlength -version
+```
+Outputs:
+```
+pathlength version 0.0.1
+```
 
-Then you need to simply call the run_model method in order to execute the model.
+# Run the program
+```bash
+./pathlength -filename <input_filename.csv>
+```
+Outputs:
+```
 
-	eye_object.run_model()
+```
+
+# Required parameters
+A CSV format file is required as input to the program. You can provide multiple lines for separate runs of the model. The format should be as follows:
+```
+nephropsfl,180,25,7800,50,3200,1.34,1.37,18,0
+nephropspl,180,25,7800,50,3200,1.34,1.37,18,12.5
+nephropsfa,180,25,6760,50,3060,1.34,1.37,10,0
+nephropspa,180,25,6760,50,3060,1.34,1.37,10,12.5
+```
+
+Each row is comprised of the following fields:
+```
+genus	=	A prefix for the output filenames e.g. organism genus name (lowercase alphanumeric only)
+180 	=	Rhabdom Length
+25 		=	Rhabdom Width
+7800 	=	Eye Diameter
+50 		=	Facet Width
+3200	=	Aperture Diameter
+1.34	=	Cytoplasm Refractive Index
+1.37	=	Rhabdom Refractive Index
+18		=	Blur Circle Extent
+0		=	Proximal Rhabdom Angle (used to create pointy-ended rhabdoms)
+```
+*NB: The genus name is NOT case sensitive. It is always converted to lowercase and should be unique to avoid filename conflicts.*
+
+# Output files
+Three output files are created:
+
+* genus_pathlengths.csv
+* genus_resolution.csv
+* genus_sensitivity.csv
+
+The first file contains multiple rows for each facet with the various combinations of tapetal and shielding pigment lengths and then multiple rows with the pathlengths 
 
 This outputs two files (where genus is the name you give when setting up the object):
 
 	genus_output_one.txt	=	Each record is separated by 999 in the text and contains the length of the reflective tapetum and shielding pigment initially, followed by the path length values for each rhabdom the light passes through, starting at the axial rhabdom.
 	genus_output_two.txt	=	**Description needed**
 
-In order to summarise the data one is required to call the summarise_data method:
 
-	eye_object.summarise_data()
-	
 This outputs three files (where genus is the name you give when setting up the object):
 
 	genus_summary_one.txt	= **Description needed**
 	genus_summary_res.txt	= Resolution output
 	genus_summary_sen.txt	= Sensitivity output
 
-# Command line options
 
-The program allows you to input certain command line options when executing the program:
-
-	e.g. python pathlength.py -v
-
-The options that are available currently are:
-
-	f	=	file (also --file)
-	g	=	graphics (also --graphics)
-	c	=	citation (also --citation)
-	h	=	help (also --help)
-	v	=	version (also --version)
-
-These options have the following effects:
-
-	file		=	Allows the user to give a filename containing parameters in comma separated value format, with individual sets of parameters on separate lines. The program will parse each line of the file in turn, running the model for each set of parameters.
-	graphics	=	Allows the user to view graphical output. *** not yet implemented ***
-	citation	=	Allows the user to view the citation information.
-	help		=	Allows the user to view the usage information.
-	version		=	Allows the user to view the version of the program.
-
-By providing an input file, you can implement a workflow, testing various different eye parameters and thus different hypotheses. The file should be in the following format and follows the same structure as using the object within the program, as shown above:
-
-	nephropsfl,180,25,7800,50,3200,1.34,1.37,18,0
-	nephropspl,180,25,7800,50,3200,1.34,1.37,18,12.5
-	nephropsfa,180,25,6760,50,3060,1.34,1.37,10,0
-	nephropspa,180,25,6760,50,3060,1.34,1.37,10,12.5
 
 # Citation
 
