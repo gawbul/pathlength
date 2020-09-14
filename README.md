@@ -199,14 +199,14 @@ Each row is comprised of the following fields:
 ```
 genus	=	A prefix for the output filenames e.g. organism genus name (lowercase alphanumeric only)
 180 	=	Rhabdom Length
-25 		=	Rhabdom Width
+25 	=	Rhabdom Width
 7800 	=	Eye Diameter
-50 		=	Facet Width
+50 	=	Facet Width
 3200	=	Aperture Diameter
 1.34	=	Cytoplasm Refractive Index
 1.37	=	Rhabdom Refractive Index
-18		=	Blur Circle Extent
-0		=	Proximal Rhabdom Angle (used to create pointy-ended rhabdoms)
+18	=	Blur Circle Extent
+0	=	Proximal Rhabdom Angle (used to create pointy-ended rhabdoms)
 ```
 *NB: The genus name is NOT case sensitive. It is always converted to lowercase and should be unique to avoid filename conflicts.*
 
@@ -217,24 +217,14 @@ Three output files are created:
 * genus_resolution.csv
 * genus_sensitivity.csv
 
-The first file contains multiple rows for each facet with the various combinations of tapetal and shielding pigment lengths and then multiple rows with the pathlengths 
+The first file contains multiple rows for each facet with the various combinations of tapetal and shielding pigment lengths in the adjacent columns and then multiple columns with the pathlengths.
 
-This outputs two files (where genus is the name you give when setting up the object):
+The second file contains the calculated resolution values.
 
-	genus_output_one.txt	=	Each record is separated by 999 in the text and contains the length of the reflective tapetum and shielding pigment initially, followed by the path length values for each rhabdom the light passes through, starting at the axial rhabdom.
-	genus_output_two.txt	=	**Description needed**
-
-
-This outputs three files (where genus is the name you give when setting up the object):
-
-	genus_summary_one.txt	= **Description needed**
-	genus_summary_res.txt	= Resolution output
-	genus_summary_sen.txt	= Sensitivity output
-
-
+The third file contains the calculated sensitivity values.
 
 # Citation
 
 If you use this program, please cite:
 
-Gaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Eyes of Nephrops Norvegicus: Optics, Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s). Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Press, 107:148.
+> Gaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Eyes of Nephrops Norvegicus: Optics, Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s). Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Press, 107:148.
