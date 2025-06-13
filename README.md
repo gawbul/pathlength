@@ -4,7 +4,7 @@ PathLength implements a ray tracing model to calculate the resolution and sensit
 
 Original QBASIC version by Dr Magnus L Johnson and Genevre Parker, 1995
 
-Golang rewrite by Dr Stephen P Moss, 2020
+Golang rewrite by Dr Stephen P Moss, 2025
 
 Author: Dr Stephen P Moss
 
