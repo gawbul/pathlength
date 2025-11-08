@@ -19,7 +19,7 @@ repos:
 
 # Go-specific hooks
 -   repo: https://github.com/tekwizely/pre-commit-golang
-    rev: v1.0.0-rc.1
+    rev: v1.0.0-rc.3
     hooks:
       # Format Go code
       - id: go-fmt

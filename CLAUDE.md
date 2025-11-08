@@ -175,10 +175,9 @@ For each parameter set with species name "X", generates:
 ## Dependencies
 
 - Go 1.25.4 (specified in go.mod)
-- github.com/stretchr/testify v1.10.0 (for testing, marked as indirect)
+- No external dependencies required
 
 ## Citation
 
 When using this program, cite:
 Gaten, E., Moss, S., Johnson, M. 2013. The Reniform Reflecting Superposition Compound Eyes of Nephrops Norvegicus: Optics, Susceptibility to Light-Induced Damage, Electrophysiology and a Ray Tracing Model. In: M. L. Johnson and M. P. Johnson, ed(s). Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxford: Academic Press, 107:148.
-- Never commit to main, always create a new branch for any changes
