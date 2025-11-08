@@ -1,0 +1,36 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: no-commit-to-branch
+      - id: pretty-format-json
+      - id: trailing-whitespace
+
+# Go-specific hooks
+-   repo: https://github.com/tekwizely/pre-commit-golang
+    rev: v1.0.0-rc.3
+    hooks:
+      # Format Go code
+      - id: go-fmt
+        args: [-w]
+
+      # Run go vet for static analysis
+      - id: go-vet-repo-mod
+
+      # Run tests before committing
+      - id: go-test-repo-mod
+        args: [-v]
+
+      # Ensure go.mod and go.sum are tidy
+      - id: go-mod-tidy-repo
