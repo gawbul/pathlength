@@ -106,165 +106,165 @@ func (m *Model) runModel() {
 	debugWriter := bufio.NewWriter(debugFile)
 	defer debugWriter.Flush()
 
-	// Reset pigments
-	m.ShieldingPigment = 0.0
-	m.TapetalPigment = 0.0
 	incrementAmount := p.RhabdomLength / 10.0
 
-	// Main loop structure from Python version
-	for {
-		fmt.Printf("P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
-		fmt.Fprintf(pathlengthsWriter, "%.6f\n%.6f\n", m.ShieldingPigment, m.TapetalPigment)
-		fmt.Fprintf(debugWriter, "P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
+	// Main pigment loops (11 steps for Shielding pigment, 11 steps for Tapetal pigment)
+	for pStep := 0; pStep <= 10; pStep++ {
+		m.ShieldingPigment = float64(pStep) * incrementAmount
+		for tStep := 0; tStep <= 10; tStep++ {
+			m.TapetalPigment = float64(tStep) * incrementAmount
 
-		// Reset for this pigment run
-		m.IncidenceOmmatidialAngle = 0.0
-		m.RefractedOmmatidialAngle = 0.0
-		currentFacet := 0
+			fmt.Printf("P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
+			fmt.Fprintf(pathlengthsWriter, "%.6f\n%.6f\n", m.ShieldingPigment, m.TapetalPigment)
+			fmt.Fprintf(debugWriter, "P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
 
-		// Loop over each facet
-		for currentFacet < m.NumberOfFacets {
-			var rowData []string
+			// Loop over each facet across the eyeshine patch axis
+			for currentFacet := 0; currentFacet < m.NumberOfFacets; currentFacet++ {
+				m.IncidenceOmmatidialAngle = float64(currentFacet) * m.OmmatidialAngle
 
-			// Account for refraction at the cornea
-			switch {
-			case m.IncidenceOmmatidialAngle > 0 && m.IncidenceOmmatidialAngle <= 15:
-				m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.9494) + 0.004667
-			case m.IncidenceOmmatidialAngle > 15 && m.IncidenceOmmatidialAngle <= 35:
-				m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.9407) + 0.1648
-			case m.IncidenceOmmatidialAngle > 35 && m.IncidenceOmmatidialAngle <= 50:
-				m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.9196) + 0.8676
-			case m.IncidenceOmmatidialAngle > 50 && m.IncidenceOmmatidialAngle <= 60:
-				m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.8677) + 3.38
-			case m.IncidenceOmmatidialAngle > 60:
-				fmt.Println("UNREAL ANGLE AT CORNEA")
-				rowData = append(rowData, "UNREAL ANGLE AT CORNEA")
-			}
+				// Account for refraction at the cornea
+				switch {
+				case m.IncidenceOmmatidialAngle == 0:
+					m.RefractedOmmatidialAngle = 0.0
+				case m.IncidenceOmmatidialAngle > 0 && m.IncidenceOmmatidialAngle <= 15:
+					m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.9494) + 0.004667
+				case m.IncidenceOmmatidialAngle > 15 && m.IncidenceOmmatidialAngle <= 35:
+					m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.9407) + 0.1648
+				case m.IncidenceOmmatidialAngle > 35 && m.IncidenceOmmatidialAngle <= 50:
+					m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.9196) + 0.8676
+				case m.IncidenceOmmatidialAngle > 50 && m.IncidenceOmmatidialAngle <= 60:
+					m.RefractedOmmatidialAngle = (m.IncidenceOmmatidialAngle * 0.8677) + 3.38
+				case m.IncidenceOmmatidialAngle > 60:
+					fmt.Println("UNREAL ANGLE AT CORNEA")
+					m.RefractedOmmatidialAngle = 60.0
+				}
 
-			// Light loss at cone due to angle of incidence
-			var facetNum float64
-			if m.RefractedOmmatidialAngle == 0 {
-				facetNum = 1.0
-			} else {
-				cc := p.FacetWidth / math.Abs(math.Tan(m.RefractedOmmatidialAngle*degToRadConv))
-				var fw float64
-				if cc > p.FacetWidth*2.0 {
-					fw = math.Cos(m.IncidenceOmmatidialAngle*degToRadConv) * p.FacetWidth
+				// Light loss at cone due to angle of incidence
+				var facetNum float64
+				if m.RefractedOmmatidialAngle == 0 {
+					facetNum = 1.0
 				} else {
-					ll := (2.0 * cc) - (2.0 * p.FacetWidth)
-					fw = math.Sin(m.IncidenceOmmatidialAngle*degToRadConv) * ll
+					cc := p.FacetWidth / math.Abs(math.Tan(m.RefractedOmmatidialAngle*degToRadConv))
+					var fw float64
+					if cc > p.FacetWidth*2.0 {
+						fw = math.Cos(m.IncidenceOmmatidialAngle*degToRadConv) * p.FacetWidth
+					} else {
+						ll := (2.0 * cc) - (2.0 * p.FacetWidth)
+						fw = math.Sin(m.IncidenceOmmatidialAngle*degToRadConv) * ll
+					}
+					facetNum = fw / p.FacetWidth
 				}
-				facetNum = fw / p.FacetWidth
-			}
-			if facetNum > 1.0 {
-				facetNum = 1.0
-			}
-
-			// --- Path Calculation Logic from Python ---
-			rhabdomLength := m.OldRhabdomLength // Use a local copy for calculations
-
-			if m.IncidenceOmmatidialAngle == 0 {
-				// CASE 4: Perpendicular ray
-				var val float64
-				if m.TapetalPigment == 0 || m.ShieldingPigment > 0 {
-					val = rhabdomLength * facetNum
-				} else {
-					val = (rhabdomLength * 2.0) * facetNum
+				if facetNum > 1.0 {
+					facetNum = 1.0
 				}
-				rowData = append(rowData, fmt.Sprintf("%.6f", val))
-			} else {
-				y := m.RhabdomRadius / math.Abs(math.Tan(m.RefractedOmmatidialAngle*degToRadConv))
-
-				if y >= rhabdomLength {
-					// CASE 3: Bounce off base
-					var x, v, val float64
-					mx := math.Sqrt(math.Pow(rhabdomLength, 2) + math.Pow(m.RhabdomRadius, 2))
-					if y == rhabdomLength {
-						x = mx
-					} else {
-						x = rhabdomLength / math.Abs(math.Cos(m.RefractedOmmatidialAngle*degToRadConv))
-					}
-					if x > m.OldRhabdomLength {
-						v = x
-					} else {
-						v = m.OldRhabdomLength
-					}
-
-					if m.TapetalPigment == 0 || m.ShieldingPigment > 0 {
-						val = x * facetNum
-					} else {
-						val = (x + v) * facetNum
-					}
-					rowData = append(rowData, fmt.Sprintf("%.6f", val))
-				} else if y > (rhabdomLength-m.ShieldingPigment) || y > (rhabdomLength-m.TapetalPigment) || m.RefractedOmmatidialAngle < m.CriticalAngle {
-					// CASE 2: Reflection from edge
-					var val float64
-					x := m.RhabdomRadius / math.Abs(math.Sin(m.RefractedOmmatidialAngle*degToRadConv))
-					z := (rhabdomLength - y) / math.Abs(math.Cos(m.RefractedOmmatidialAngle*degToRadConv))
-					if z > x {
-						z = x
-					}
-					var v float64
-					if (x + z) > m.OldRhabdomLength {
-						v = x + z
-					} else {
-						v = m.OldRhabdomLength
-					}
-					if m.TapetalPigment == 0 {
-						val = (x + z) * facetNum
-					} else {
-						val = (x + z + v) * facetNum
-					}
-					if m.ShieldingPigment > 0 {
-						val = (x + z) * facetNum
-					}
-					if m.ShieldingPigment > (rhabdomLength - y) {
-						val = x * facetNum
-					}
-					rowData = append(rowData, fmt.Sprintf("%.6f", val))
-				} else {
-					// CASE 1: No reflection
-					boa := m.RefractedOmmatidialAngle
-					// This case in python seems to be a loop, here we simulate one pass
-					x := m.RhabdomRadius / math.Abs(math.Sin(boa*degToRadConv))
-					rowData = append(rowData, fmt.Sprintf("%.6f", x*facetNum))
-					// The python version modifies state and continues the loop, which is complex.
-					// This translation simulates the first pass, which is the dominant effect.
+				if facetNum < 0.0 {
+					facetNum = 0.0
 				}
-			}
 
-			// Increment for next facet
-			currentFacet++
-			m.IncidenceOmmatidialAngle += m.OmmatidialAngle
-
-			// Account for blur circle
-			if p.BlurCircleExtent > 0 {
-				fd := float64(m.NumberOfFacets) / p.BlurCircleExtent
-				nx := 0
-				for i := 0; i < int(p.BlurCircleExtent); i++ {
-					nx++
-					if float64(currentFacet) > (fd * float64(nx)) {
-						m.RefractedOmmatidialAngle += m.OmmatidialAngle
-						rowData = append(rowData, "0")
+				// Leading zeros for blur circle off-axis shift and angle adjustment
+				var rowData []string
+				boa := m.RefractedOmmatidialAngle
+				if p.BlurCircleExtent > 0 {
+					fd := float64(m.NumberOfFacets) / p.BlurCircleExtent
+					for i := 1; i <= int(p.BlurCircleExtent); i++ {
+						if float64(currentFacet) > (fd * float64(i)) {
+							boa += m.OmmatidialAngle
+							rowData = append(rowData, "0")
+						}
 					}
 				}
+
+				// Ray tracing through rhabdom array
+				rhabdomLength := m.OldRhabdomLength
+				cz := 0
+				for {
+					// Account for tapered/pointy rhabdom shape at proximal entrance
+					if boa > m.CriticalAngle && cz == 0 {
+						boa -= p.ProximalRhabdomAngle
+					}
+
+					if m.IncidenceOmmatidialAngle == 0 {
+						// CASE 4: Perpendicular ray
+						var val float64
+						if m.TapetalPigment == 0 || m.ShieldingPigment > 0 {
+							val = rhabdomLength * facetNum
+						} else {
+							val = (rhabdomLength * 2.0) * facetNum
+						}
+						rowData = append(rowData, fmt.Sprintf("%.6f", val))
+						break
+					}
+
+					y := m.RhabdomRadius / math.Abs(math.Tan(boa*degToRadConv))
+
+					if y >= rhabdomLength {
+						// CASE 3: Bounce off base
+						var x, v, val float64
+						mx := math.Sqrt(math.Pow(rhabdomLength, 2) + math.Pow(m.RhabdomRadius, 2))
+						if y == rhabdomLength {
+							x = mx
+						} else {
+							x = rhabdomLength / math.Abs(math.Cos(boa*degToRadConv))
+						}
+						if x > m.OldRhabdomLength {
+							v = x
+						} else {
+							v = m.OldRhabdomLength
+						}
+
+						if m.TapetalPigment == 0 || m.ShieldingPigment > 0 {
+							val = x * facetNum
+						} else {
+							val = (x + v) * facetNum
+						}
+						rowData = append(rowData, fmt.Sprintf("%.6f", val))
+						break
+					} else if y > (rhabdomLength-m.ShieldingPigment) || y > (rhabdomLength-m.TapetalPigment) || boa < m.CriticalAngle {
+						// CASE 2: Reflection from edge
+						var val float64
+						x := m.RhabdomRadius / math.Abs(math.Sin(boa*degToRadConv))
+						z := (rhabdomLength - y) / math.Abs(math.Cos(boa*degToRadConv))
+						if z > x {
+							z = x
+						}
+						var v float64
+						if (x + z) > m.OldRhabdomLength {
+							v = x + z
+						} else {
+							v = m.OldRhabdomLength
+						}
+						if m.TapetalPigment == 0 {
+							val = (x + z) * facetNum
+						} else {
+							val = (x + z + v) * facetNum
+						}
+						if m.ShieldingPigment > 0 {
+							val = (x + z) * facetNum
+						}
+						if m.ShieldingPigment > (rhabdomLength - y) {
+							val = x * facetNum
+						}
+						rowData = append(rowData, fmt.Sprintf("%.6f", val))
+						break
+					} else {
+						// CASE 1: No reflection (ray passes through rhabdom wall into adjacent rhabdom)
+						x := m.RhabdomRadius / math.Abs(math.Sin(boa*degToRadConv))
+						rowData = append(rowData, fmt.Sprintf("%.6f", x*facetNum))
+						rhabdomLength -= y
+						boa += m.OmmatidialAngle
+						cz = 1
+						if rhabdomLength <= m.TapetalPigment || rhabdomLength <= m.ShieldingPigment {
+							break
+						}
+					}
+				}
+
+				// Finish row
+				rowData = append(rowData, "998")
+				fmt.Fprintln(pathlengthsWriter, strings.Join(rowData, ","))
 			}
 
-			// Finish row
-			rowData = append(rowData, "998")
-			fmt.Fprintln(pathlengthsWriter, strings.Join(rowData, ","))
-		}
-
-		fmt.Fprintln(pathlengthsWriter, "999")
-
-		// Pigment increment logic from python
-		if m.TapetalPigment >= m.OldRhabdomLength && m.ShieldingPigment >= m.OldRhabdomLength {
-			break // End simulation
-		} else if m.TapetalPigment >= m.OldRhabdomLength {
-			m.TapetalPigment = 0.0
-			m.ShieldingPigment += incrementAmount
-		} else {
-			m.TapetalPigment += incrementAmount
+			fmt.Fprintln(pathlengthsWriter, "999")
 		}
 	}
 }
