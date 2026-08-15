@@ -212,11 +212,7 @@ func (m *Model) runModel() {
 						} else {
 							x = rhabdomLength / math.Abs(math.Cos(boa*degToRadConv))
 						}
-						if x > m.OldRhabdomLength {
-							v = x
-						} else {
-							v = m.OldRhabdomLength
-						}
+						v = m.OldRhabdomLength / math.Abs(math.Cos(boa*degToRadConv))
 
 						if m.TapetalPigment == 0 || m.ShieldingPigment > 0 {
 							val = x * facetNum
@@ -233,12 +229,7 @@ func (m *Model) runModel() {
 						if z > x {
 							z = x
 						}
-						var v float64
-						if (x + z) > m.OldRhabdomLength {
-							v = x + z
-						} else {
-							v = m.OldRhabdomLength
-						}
+						v := m.OldRhabdomLength / math.Abs(math.Cos(boa*degToRadConv))
 						if m.TapetalPigment == 0 {
 							val = (x + z) * facetNum
 						} else {

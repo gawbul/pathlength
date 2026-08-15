@@ -84,7 +84,7 @@ func (m *Model) calculateRessens() {
 			hwp := xz - halfwayPoint
 			var frac float64
 			if diff > 0 {
-				frac = hwp / (diff + 0.1) // allow unbounded forward extrapolation
+				frac = hwp / diff
 			} else {
 				frac = 0.0 // prevent backward extrapolation
 			}
