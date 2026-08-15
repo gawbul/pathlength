@@ -118,7 +118,6 @@ func (m *Model) calculateRessens() {
 						yy = rhabdoms[i+1]
 					}
 					opticAxis = m.OmmatidialAngle * float64(i)
-					break
 				}
 			}
 			diff := xz - yy
