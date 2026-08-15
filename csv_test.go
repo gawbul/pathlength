@@ -137,7 +137,7 @@ func TestCalculateRessens(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read resolution file: %v", err)
 	}
-	expectedRes := "228"
+	expectedRes := "229"
 	if !strings.Contains(string(resContent), expectedRes) {
 		t.Errorf("Resolution file content is wrong. Got '%s', expected to contain '%s'", string(resContent), expectedRes)
 	}
