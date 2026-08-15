@@ -47,6 +47,7 @@ func (m *Model) calculateRessens() {
 
 	// --- State variables for summary calculation ---
 	rhabdoms := make([]float64, 21)
+	intensities := make([]float64, 21)
 	matrixSens := []string{}
 	matrixRes := []string{}
 	facet := 0.0
@@ -67,27 +68,52 @@ func (m *Model) calculateRessens() {
 			for _, r := range rhabdoms {
 				sens += r
 			}
-			halfwayPoint := rhabdoms[0] / 2.0
-			opticAxis := 0.0
-			xz, yy := rhabdoms[0], rhabdoms[1]
 
-			for i := 1; i < 12; i++ {
-				if halfwayPoint < rhabdoms[i] {
-					xz = rhabdoms[i]
-					if i+1 < len(rhabdoms) {
-						yy = rhabdoms[i+1]
-					}
-					opticAxis = m.OmmatidialAngle * float64(i)
+			// Find true peak of the intensity profile
+			maxIntensity := intensities[0]
+			for _, v := range intensities {
+				if v > maxIntensity {
+					maxIntensity = v
 				}
 			}
-			diff := xz - yy
-			hwp := xz - halfwayPoint
-			var frac float64
-			if diff > 0 {
-				frac = hwp / diff
-			} else {
-				frac = 0.0 // prevent backward extrapolation
+			halfwayPoint := maxIntensity / 2.0
+
+			opticAxis := 0.0
+			xz, yy := intensities[0], intensities[1]
+
+			// Scan full array to find threshold crossing
+			foundCrossing := false
+			for i := 0; i < len(intensities)-1; i++ {
+				if intensities[i] >= halfwayPoint && intensities[i+1] < halfwayPoint {
+					xz = intensities[i]
+					yy = intensities[i+1]
+					opticAxis = m.OmmatidialAngle * float64(i)
+					foundCrossing = true
+					break
+				}
 			}
+
+			var frac float64
+			if !foundCrossing {
+				// If it never drops below half-max (extreme blur), cap at the maximum measured angle
+				frac = 0.0
+				opticAxis = m.OmmatidialAngle * float64(len(intensities)-1)
+			} else {
+				diff := xz - yy
+				hwp := xz - halfwayPoint
+				if diff > 0 {
+					frac = hwp / diff
+					// strictly bound frac between 0.0 and 1.0 to guarantee correct interpolation
+					if frac < 0.0 {
+						frac = 0.0
+					} else if frac > 1.0 {
+						frac = 1.0
+					}
+				} else {
+					frac = 0.0
+				}
+			}
+
 			oab := frac * m.OmmatidialAngle
 			res := oab + opticAxis
 
@@ -112,6 +138,7 @@ func (m *Model) calculateRessens() {
 			}
 			// Reset for next block
 			rhabdoms = make([]float64, 21)
+			intensities = make([]float64, 21)
 			facet = 0
 			headerCount = 0
 		} else if headerCount < 2 {
@@ -149,9 +176,10 @@ func (m *Model) calculateRessens() {
 					bx = 0
 				}
 				tot += bx / 100.0
-				bx *= torus
+
 				if rhabdom < len(rhabdoms) {
-					rhabdoms[rhabdom] += bx
+					intensities[rhabdom] += bx      // Intensity profile (no torus weighting)
+					rhabdoms[rhabdom] += bx * torus // Total Sensitivity (area weighted)
 				}
 				rhabdom++
 			}
