@@ -44,14 +44,13 @@ source ~/.profile
 
 ## Install dependencies
 
+The application uses standard Go library packages with no external runtime dependencies.
+
 ### macOS
 
 ```bash
 # Install git
 brew install git
-
-# Install Go packages
-go get github.com/stretchr/testify
 ```
 
 ### Linux (Debian/Ubuntu)
@@ -60,9 +59,6 @@ go get github.com/stretchr/testify
 # Install git
 sudo apt-get update
 sudo apt-get install git
-
-# Install Go packages
-go get github.com/stretchr/testify
 ```
 
 ## Checkout source code
@@ -113,7 +109,7 @@ Outputs:
 === RUN   TestParseInputParameters/ValidFile
 === RUN   TestParseInputParameters/NonExistentFile
 === RUN   TestParseInputParameters/MalformedFile
-2025/06/13 15:05:08 Skipping malformed record (expected 10 fields, got 3): [test_species 100 10]
+2026/08/15 13:06:29 Skipping malformed record on line 2: record on line 2: wrong number of fields
 --- PASS: TestParseInputParameters (0.00s)
     --- PASS: TestParseInputParameters/ValidFile (0.00s)
     --- PASS: TestParseInputParameters/NonExistentFile (0.00s)
@@ -121,8 +117,15 @@ Outputs:
 === RUN   TestCalculateRessens
 INFO: Calculating resolution and sensitivity...
 --- PASS: TestCalculateRessens (0.00s)
+=== RUN   TestInitialCalculations
+--- PASS: TestInitialCalculations (0.00s)
+=== RUN   TestRunModelBlurCircleAndPointyRhabdom
+--- PASS: TestRunModelBlurCircleAndPointyRhabdom (0.01s)
+=== RUN   TestCalculateRessensFullMatrix
+INFO: Calculating resolution and sensitivity...
+--- PASS: TestCalculateRessensFullMatrix (0.00s)
 PASS
-ok      pathlength      0.271s
+ok  	pathlength	0.215s
 ```
 
 ### Build the program
@@ -216,7 +219,7 @@ Outputs:
 
 ```bash
 Parsing input parameters from example_data/acanthephyra_parameters.txt...
-Initialising model parameters for acanthephyra...
+--- Running simulation for acanthephyra ---
 Calculating pathlengths for acanthephyra...
 P: 0.00, T: 0.00
 P: 0.00, T: 12.70
@@ -233,114 +236,26 @@ P: 12.70, T: 0.00
 P: 12.70, T: 12.70
 P: 12.70, T: 25.40
 P: 12.70, T: 38.10
-P: 12.70, T: 50.80
-P: 12.70, T: 63.50
-P: 12.70, T: 76.20
-P: 12.70, T: 88.90
-P: 12.70, T: 101.60
-P: 12.70, T: 114.30
-P: 12.70, T: 127.00
-P: 25.40, T: 0.00
-P: 25.40, T: 12.70
-P: 25.40, T: 25.40
-P: 25.40, T: 38.10
-P: 25.40, T: 50.80
-P: 25.40, T: 63.50
-P: 25.40, T: 76.20
-P: 25.40, T: 88.90
-P: 25.40, T: 101.60
-P: 25.40, T: 114.30
-P: 25.40, T: 127.00
-P: 38.10, T: 0.00
-P: 38.10, T: 12.70
-P: 38.10, T: 25.40
-P: 38.10, T: 38.10
-P: 38.10, T: 50.80
-P: 38.10, T: 63.50
-P: 38.10, T: 76.20
-P: 38.10, T: 88.90
-P: 38.10, T: 101.60
-P: 38.10, T: 114.30
-P: 38.10, T: 127.00
-P: 50.80, T: 0.00
-P: 50.80, T: 12.70
-P: 50.80, T: 25.40
-P: 50.80, T: 38.10
-P: 50.80, T: 50.80
-P: 50.80, T: 63.50
-P: 50.80, T: 76.20
-P: 50.80, T: 88.90
-P: 50.80, T: 101.60
-P: 50.80, T: 114.30
-P: 50.80, T: 127.00
-P: 63.50, T: 0.00
-P: 63.50, T: 12.70
-P: 63.50, T: 25.40
-P: 63.50, T: 38.10
-P: 63.50, T: 50.80
-P: 63.50, T: 63.50
-P: 63.50, T: 76.20
-P: 63.50, T: 88.90
-P: 63.50, T: 101.60
-P: 63.50, T: 114.30
-P: 63.50, T: 127.00
-P: 76.20, T: 0.00
-P: 76.20, T: 12.70
-P: 76.20, T: 25.40
-P: 76.20, T: 38.10
-P: 76.20, T: 50.80
-P: 76.20, T: 63.50
-P: 76.20, T: 76.20
-P: 76.20, T: 88.90
-P: 76.20, T: 101.60
-P: 76.20, T: 114.30
-P: 76.20, T: 127.00
-P: 88.90, T: 0.00
-P: 88.90, T: 12.70
-P: 88.90, T: 25.40
-P: 88.90, T: 38.10
-P: 88.90, T: 50.80
-P: 88.90, T: 63.50
-P: 88.90, T: 76.20
-P: 88.90, T: 88.90
-P: 88.90, T: 101.60
-P: 88.90, T: 114.30
-P: 88.90, T: 127.00
-P: 101.60, T: 0.00
-P: 101.60, T: 12.70
-P: 101.60, T: 25.40
-P: 101.60, T: 38.10
-P: 101.60, T: 50.80
-P: 101.60, T: 63.50
-P: 101.60, T: 76.20
-P: 101.60, T: 88.90
-P: 101.60, T: 101.60
-P: 101.60, T: 114.30
-P: 101.60, T: 127.00
-P: 114.30, T: 0.00
-P: 114.30, T: 12.70
-P: 114.30, T: 25.40
-P: 114.30, T: 38.10
-P: 114.30, T: 50.80
-P: 114.30, T: 63.50
-P: 114.30, T: 76.20
-P: 114.30, T: 88.90
-P: 114.30, T: 101.60
-P: 114.30, T: 114.30
-P: 114.30, T: 127.00
-P: 127.00, T: 0.00
-P: 127.00, T: 12.70
-P: 127.00, T: 25.40
-P: 127.00, T: 38.10
-P: 127.00, T: 50.80
-P: 127.00, T: 63.50
-P: 127.00, T: 76.20
-P: 127.00, T: 88.90
+...
 P: 127.00, T: 101.60
 P: 127.00, T: 114.30
 P: 127.00, T: 127.00
 INFO: Calculating resolution and sensitivity...
-Done.
+--- Finished simulation for acanthephyra ---
+
+--- Running simulation for acanthephyra_bce3 ---
+Calculating pathlengths for acanthephyra_bce3...
+...
+INFO: Calculating resolution and sensitivity...
+--- Finished simulation for acanthephyra_bce3 ---
+
+--- Running simulation for acanthephyra_bce6 ---
+Calculating pathlengths for acanthephyra_bce6...
+...
+INFO: Calculating resolution and sensitivity...
+--- Finished simulation for acanthephyra_bce6 ---
+
+All simulations complete.
 ```
 
 ## Required parameters
@@ -377,8 +292,8 @@ Four output files are created:
 
 * genus_debug.csv
 * genus_pathlengths.csv
-* genus_resolution.csv
-* genus_sensitivity.csv
+* genus_summary_res.csv
+* genus_summary_sen.csv
 
 The pathlengths file contains multiple rows for each facet with the various combinations of tapetal and shielding pigment lengths in the adjacent columns and then multiple columns with the pathlengths.
 
