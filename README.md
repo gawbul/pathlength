@@ -21,17 +21,17 @@ Email: gawbul@gmail.com
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 
 # Install Golang
-brew install go@1.25
+brew install go@1.26
 ```
 
 ### Linux (Debian/Ubuntu)
 
 ```bash
 # Download tarball
-wget -P /tmp https://dl.google.com/go/go1.25.4.linux-amd64.tar.gz
+wget -P /tmp https://dl.google.com/go/go1.26.6.linux-amd64.tar.gz
 
 # Extract tarball
-sudo tar -zxvf /tmp/go1.25.4.linux-amd64.tar.gz -C /usr/local
+sudo tar -zxvf /tmp/go1.26.6.linux-amd64.tar.gz -C /usr/local
 
 # Setup environment
 echo "export GOROOT=/usr/local/go" >> ~/.profile
