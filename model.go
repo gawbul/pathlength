@@ -45,6 +45,7 @@ type Model struct {
 	RefractedOmmatidialAngle float64
 	RhabdomAlphaAngle        float64
 	OldRhabdomLength         float64 // Store original length
+	DebugMode                bool
 }
 
 var degToRadConv = math.Pi / 180.0
@@ -98,13 +99,16 @@ func (m *Model) runModel() {
 	pathlengthsWriter := bufio.NewWriter(pathlengthsFile)
 	defer pathlengthsWriter.Flush()
 
-	debugFile, err := os.Create(fmt.Sprintf("%s_debug.csv", p.SpeciesName))
-	if err != nil {
-		log.Fatalf("Error creating debug file: %v", err)
+	var debugWriter *bufio.Writer
+	if m.DebugMode {
+		debugFile, err := os.Create(fmt.Sprintf("%s_debug.csv", p.SpeciesName))
+		if err != nil {
+			log.Fatalf("Error creating debug file: %v", err)
+		}
+		defer debugFile.Close()
+		debugWriter = bufio.NewWriter(debugFile)
+		defer debugWriter.Flush()
 	}
-	defer debugFile.Close()
-	debugWriter := bufio.NewWriter(debugFile)
-	defer debugWriter.Flush()
 
 	incrementAmount := p.RhabdomLength / 10.0
 
@@ -116,7 +120,9 @@ func (m *Model) runModel() {
 
 			fmt.Printf("P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
 			fmt.Fprintf(pathlengthsWriter, "%.6f\n%.6f\n", m.ShieldingPigment, m.TapetalPigment)
-			fmt.Fprintf(debugWriter, "P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
+			if debugWriter != nil {
+				fmt.Fprintf(debugWriter, "P: %.2f, T: %.2f\n", m.ShieldingPigment, m.TapetalPigment)
+			}
 
 			// Loop over each facet across the eyeshine patch axis
 			for currentFacet := 0; currentFacet < m.NumberOfFacets; currentFacet++ {
@@ -259,8 +265,7 @@ func (m *Model) runModel() {
 					}
 				}
 
-				// Finish row
-				rowData = append(rowData, "998")
+				// Write row
 				fmt.Fprintln(pathlengthsWriter, strings.Join(rowData, ","))
 			}
 

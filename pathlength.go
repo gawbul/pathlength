@@ -16,6 +16,7 @@ const version = "0.6.0"
 func main() {
 	// --- Command Line Argument Parsing ---
 	paramFile := flag.String("f", "", "Path to a parameter file (CSV format). (Required)")
+	debugFlag := flag.Bool("d", false, "Generate debug CSV output file.")
 	showCitation := flag.Bool("c", false, "Show the program citation.")
 	showHelp := flag.Bool("h", false, "Show this help message.")
 	showLicense := flag.Bool("l", false, "Show the program license.")
@@ -50,7 +51,7 @@ Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxfo
 	}
 
 	if *showHelp {
-		fmt.Printf("Usage: %s -f filename [-h] [-v]\n", filepath.Base(os.Args[0]))
+		fmt.Printf("Usage: %s -f filename [-c] [-d] [-h] [-l] [-v]\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
@@ -63,7 +64,7 @@ Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxfo
 	// --- Initialisation ---
 	// Exit if no parameter file is provided.
 	if *paramFile == "" {
-		fmt.Printf("Usage: %s -f filename [-h] [-v]\n", filepath.Base(os.Args[0]))
+		fmt.Printf("Usage: %s -f filename [-c] [-d] [-h] [-l] [-v]\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 		log.Fatal("Error: No parameter file supplied. Use the -f flag to specify a file.")
 	}
@@ -77,6 +78,7 @@ Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxfo
 	// --- Loop over each parameter set and run the model ---
 	for _, params := range paramsList {
 		model := NewModel(params)
+		model.DebugMode = *debugFlag
 
 		fmt.Printf("--- Running simulation for %s ---\n", model.Params.SpeciesName)
 

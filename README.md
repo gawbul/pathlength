@@ -84,8 +84,9 @@ go run .
 Outputs:
 
 ```bash
-Usage: pathlength -f filename [-h] [-v]
+Usage: pathlength -f filename [-c] [-d] [-h] [-l] [-v]
   -c    Show the program citation.
+  -d    Generate debug CSV output file.
   -f string
         Path to a parameter file (CSV format). (Required)
   -h    Show this help message.
@@ -121,6 +122,8 @@ INFO: Calculating resolution and sensitivity...
 --- PASS: TestInitialCalculations (0.00s)
 === RUN   TestRunModelBlurCircleAndPointyRhabdom
 --- PASS: TestRunModelBlurCircleAndPointyRhabdom (0.01s)
+=== RUN   TestDebugFlagOutput
+--- PASS: TestDebugFlagOutput (0.00s)
 === RUN   TestCalculateRessensFullMatrix
 INFO: Calculating resolution and sensitivity...
 --- PASS: TestCalculateRessensFullMatrix (0.00s)
@@ -145,8 +148,9 @@ chmod +x pathlength
 Outputs:
 
 ```bash
-Usage: pathlength -f filename [-h] [-v]
+Usage: pathlength -f filename [-c] [-d] [-h] [-l] [-v]
   -c    Show the program citation.
+  -d    Generate debug CSV output file.
   -f string
         Path to a parameter file (CSV format). (Required)
   -h    Show this help message.
@@ -258,6 +262,14 @@ INFO: Calculating resolution and sensitivity...
 All simulations complete.
 ```
 
+### Run with debug output
+
+To generate optional `{species}_debug.csv` files containing simulation debug logs (e.g. pigment migration steps):
+
+```bash
+./pathlength -f example_data/acanthephyra_parameters.txt -d
+```
+
 ## Required parameters
 
 A CSV format file is required as input to the program. You can provide multiple lines for separate runs of the model. The format should be as follows:
@@ -288,18 +300,18 @@ genus	= A prefix for the output filenames e.g. organism genus name (lowercase al
 
 ## Output files
 
-Four output files are created:
+The following output files are created:
 
-* genus_debug.csv
-* genus_pathlengths.csv
-* genus_summary_res.csv
-* genus_summary_sen.csv
+* `genus_pathlengths.csv` - Raw pathlength data for each facet/pigment combination
+* `genus_summary_res.csv` - Calculated resolution summary
+* `genus_summary_sen.csv` - Calculated sensitivity summary
+* `genus_debug.csv` - (Optional) Debug information from simulation, enabled with `-d`
 
 The pathlengths file contains multiple rows for each facet with the various combinations of tapetal and shielding pigment lengths in the adjacent columns and then multiple columns with the pathlengths.
 
-The resolution file contains the calculated resolution values.
+The summary resolution file contains the calculated resolution values.
 
-The sensitivity file contains the calculated sensitivity values.
+The summary sensitivity file contains the calculated sensitivity values.
 
 ## Citation
 

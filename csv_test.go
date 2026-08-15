@@ -107,7 +107,7 @@ func TestCalculateRessens(t *testing.T) {
 	// Create a mock pathlengths file
 	pathlengthsContent := `0.000000
 0.000000
-84.000000,998
+84.000000
 999
 `
 	pathlengthsFileName := fmt.Sprintf("%s_pathlengths.csv", params.SpeciesName)
