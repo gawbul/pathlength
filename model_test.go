@@ -287,6 +287,12 @@ func TestCalculateRessensNephropsWideBlurCircle(t *testing.T) {
 			if val <= 0 {
 				t.Errorf("Row %d, Col %d: expected positive resolution value, got %d", rowIdx, colIdx, val)
 			}
+			// Verify backward extrapolation fix (diff < 0 caps at 1616)
+			if (rowIdx == 0 && colIdx == 1) || (rowIdx == 1 && colIdx == 4) || (rowIdx == 2 && colIdx == 4) {
+				if val != 1616 {
+					t.Errorf("Row %d, Col %d: expected backward extrapolation to cap at 1616, got %d", rowIdx, colIdx, val)
+				}
+			}
 		}
 	}
 }
