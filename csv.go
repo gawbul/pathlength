@@ -83,16 +83,13 @@ func (m *Model) calculateRessens() {
 			diff := xz - yy
 			hwp := xz - halfwayPoint
 			var frac float64
-			if diff > 0 && hwp >= 0 {
-				frac = math.Min(1.0, math.Max(0.0, hwp/(diff+0.1)))
+			if diff > 0 {
+				frac = hwp / (diff + 0.1) // allow unbounded forward extrapolation
 			} else {
-				frac = 0.0
+				frac = 0.0 // prevent backward extrapolation
 			}
 			oab := frac * m.OmmatidialAngle
 			res := oab + opticAxis
-			if res < 0 {
-				res = 0.0
-			}
 
 			if cc == 0 && dd > 0 {
 				fmt.Fprintln(sensWriter, strings.Join(matrixSens, ","))
