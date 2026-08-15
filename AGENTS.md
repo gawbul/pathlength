@@ -111,7 +111,7 @@ refactor(model): simplify ray tracing calculation logic
 The codebase is organized into Go files in a single package:
 
 1. **pathlength.go** - Entry point with CLI argument parsing
-   - Handles flags: `-f` (file), `-h` (help), `-v` (version), `-c` (citation), `-l` (license)
+   - Handles flags: `-f` (file), `-d` (debug), `-h` (help), `-v` (version), `-c` (citation), `-l` (license)
    - Parses parameter file and orchestrates simulation runs
    - Main loop iterates over each parameter set from CSV input
 
@@ -125,7 +125,7 @@ The codebase is organized into Go files in a single package:
      - For each combination, iterates over facets in the eyeshine patch
      - Calculates light paths through rhabdoms based on angle of incidence
      - Four main cases: perpendicular ray, no reflection, edge reflection, base bounce
-     - Outputs pathlengths to CSV file
+     - Outputs pathlengths to CSV file (and optional debug file when `-d` is passed)
 
 3. **csv.go** - File I/O and data processing
    - `parseInputParameters()`: Reads CSV parameter file, returns slice of Parameters
@@ -139,13 +139,14 @@ The codebase is organized into Go files in a single package:
    - `TestCalculateRessens`: Tests resolution/sensitivity calculation
    - `TestInitialCalculations`: Tests derived optical calculations
    - `TestRunModelBlurCircleAndPointyRhabdom`: Tests blur circle shifts and pointy rhabdom behavior
+   - `TestDebugFlagOutput`: Tests optional debug CSV file generation
    - `TestCalculateRessensFullMatrix`: Tests resolution and sensitivity matrix generation
 
 ### Data Flow
 
 1. CSV parameter file → `parseInputParameters()` → slice of `Parameters`
 2. For each Parameters → `NewModel()` → `Model` with calculated values
-3. `Model.runModel()` → writes `{species}_pathlengths.csv` and `{species}_debug.csv`
+3. `Model.runModel()` → writes `{species}_pathlengths.csv` (and `{species}_debug.csv` if `-d` is set)
 4. `Model.calculateRessens()` → reads pathlengths → writes summary CSV files
 
 ### Input File Format
@@ -162,10 +163,10 @@ Each row represents a separate simulation run. Multiple rows can be processed in
 ### Output Files
 
 For each parameter set with species name "X", generates:
-- `X_debug.csv` - Debug information from simulation
 - `X_pathlengths.csv` - Raw pathlength data for each facet/pigment combination
 - `X_summary_res.csv` - Calculated resolution values
 - `X_summary_sen.csv` - Calculated sensitivity values
+- `X_debug.csv` - (Optional, generated with `-d`) Debug information from simulation
 
 ## Key Implementation Notes
 

@@ -85,9 +85,7 @@ func TestRunModelBlurCircleAndPointyRhabdom(t *testing.T) {
 	modelPointy.runModel()
 
 	defer os.Remove("test_flat_pathlengths.csv")
-	defer os.Remove("test_flat_debug.csv")
 	defer os.Remove("test_pointy_pathlengths.csv")
-	defer os.Remove("test_pointy_debug.csv")
 
 	// Read flat pathlengths file
 	fileFlat, err := os.Open("test_flat_pathlengths.csv")
@@ -109,7 +107,7 @@ func TestRunModelBlurCircleAndPointyRhabdom(t *testing.T) {
 		if line == "999" {
 			blockCount++
 		}
-		if strings.Contains(line, "998") && strings.HasPrefix(line, "0,") {
+		if strings.HasPrefix(line, "0,") {
 			foundLeadingZero = true
 		}
 	}
@@ -148,6 +146,52 @@ func TestRunModelBlurCircleAndPointyRhabdom(t *testing.T) {
 	}
 }
 
+func TestDebugFlagOutput(t *testing.T) {
+	paramsNoDebug := Parameters{
+		SpeciesName:              "test_nodebug",
+		RhabdomLength:            100,
+		RhabdomWidth:             20,
+		EyeDiameter:              1000,
+		FacetWidth:               20,
+		ApertureDiameter:         500,
+		CytoplasmRefractiveIndex: 1.34,
+		RhabdomRefractiveIndex:   1.37,
+		BlurCircleExtent:         1,
+		ProximalRhabdomAngle:     0,
+	}
+	modelNoDebug := NewModel(paramsNoDebug)
+	modelNoDebug.DebugMode = false
+	modelNoDebug.runModel()
+
+	defer os.Remove("test_nodebug_pathlengths.csv")
+	if _, err := os.Stat("test_nodebug_debug.csv"); !os.IsNotExist(err) {
+		os.Remove("test_nodebug_debug.csv")
+		t.Errorf("Expected test_nodebug_debug.csv to NOT exist when DebugMode is false")
+	}
+
+	paramsDebug := Parameters{
+		SpeciesName:              "test_debug",
+		RhabdomLength:            100,
+		RhabdomWidth:             20,
+		EyeDiameter:              1000,
+		FacetWidth:               20,
+		ApertureDiameter:         500,
+		CytoplasmRefractiveIndex: 1.34,
+		RhabdomRefractiveIndex:   1.37,
+		BlurCircleExtent:         1,
+		ProximalRhabdomAngle:     0,
+	}
+	modelDebug := NewModel(paramsDebug)
+	modelDebug.DebugMode = true
+	modelDebug.runModel()
+
+	defer os.Remove("test_debug_pathlengths.csv")
+	defer os.Remove("test_debug_debug.csv")
+	if _, err := os.Stat("test_debug_debug.csv"); os.IsNotExist(err) {
+		t.Errorf("Expected test_debug_debug.csv to exist when DebugMode is true")
+	}
+}
+
 func TestCalculateRessensFullMatrix(t *testing.T) {
 	params := Parameters{
 		SpeciesName:              "test_matrix",
@@ -167,7 +211,6 @@ func TestCalculateRessensFullMatrix(t *testing.T) {
 	model.calculateRessens()
 
 	defer os.Remove("test_matrix_pathlengths.csv")
-	defer os.Remove("test_matrix_debug.csv")
 	defer os.Remove("test_matrix_summary_res.csv")
 	defer os.Remove("test_matrix_summary_sen.csv")
 

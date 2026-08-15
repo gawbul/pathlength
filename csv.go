@@ -52,6 +52,7 @@ func (m *Model) calculateRessens() {
 	facet := 0.0
 	arem := 0.0
 	cc, dd := 0, 0
+	headerCount := 0
 
 	scanner := bufio.NewScanner(pathlengthsFile)
 	for scanner.Scan() {
@@ -60,48 +61,7 @@ func (m *Model) calculateRessens() {
 			continue
 		}
 
-		if strings.Contains(line, "998") {
-			parts := strings.Split(line, ",")
-			rhabdom := 0
-			tot := 0.0
-			area := math.Pi * math.Pow(facet+0.5, 2)
-			inci := math.Pi * math.Pow(facet-0.5, 2)
-			if facet == 0 {
-				inci = 0
-			}
-			torus := area - inci
-			if area > arem {
-				arem = area
-			}
-
-			for _, part := range parts {
-				if part == "998" {
-					break
-				}
-				pathlength, _ := strconv.ParseFloat(part, 64)
-				var absorbance, bx float64
-				if pathlength > 0 {
-					absorbance = 1 - math.Exp(-0.01*pathlength)
-				} else {
-					absorbance = 0
-				}
-				if rhabdom == 0 && absorbance > 0 {
-					bx = 100 * absorbance
-				} else if rhabdom > 0 && absorbance > 0 {
-					bx = 100 * ((1 - tot) * absorbance)
-				}
-				if absorbance == 0 {
-					bx = 0
-				}
-				tot += bx / 100.0
-				bx *= torus
-				if rhabdom < len(rhabdoms) {
-					rhabdoms[rhabdom] += bx
-				}
-				rhabdom++
-			}
-			facet++
-		} else if line == "999" {
+		if line == "999" {
 			// End of block, summarize
 			sens := 0.0
 			for _, r := range rhabdoms {
@@ -138,7 +98,7 @@ func (m *Model) calculateRessens() {
 			} else {
 				matrixSens = append(matrixSens, "0")
 			}
-			matrixRes = append(matrixRes, fmt.Sprintf("%d", int(res*200)))
+			matrixRes = append(matrixRes, fmt.Sprintf("%d", int(res*200.0)))
 
 			cc++
 			if cc == 11 {
@@ -146,10 +106,51 @@ func (m *Model) calculateRessens() {
 				cc = 0
 			}
 			// Reset for next block
-			for i := range rhabdoms {
-				rhabdoms[i] = 0
-			}
+			rhabdoms = make([]float64, 21)
 			facet = 0
+			headerCount = 0
+		} else if headerCount < 2 {
+			// Shielding or Tapetal pigment header line
+			headerCount++
+		} else {
+			// Facet pathlength row
+			parts := strings.Split(line, ",")
+			rhabdom := 0
+			tot := 0.0
+			area := math.Pi * math.Pow(facet+0.5, 2)
+			inci := math.Pi * math.Pow(facet-0.5, 2)
+			if facet == 0 {
+				inci = 0
+			}
+			torus := area - inci
+			if area > arem {
+				arem = area
+			}
+
+			for _, part := range parts {
+				pathlength, _ := strconv.ParseFloat(part, 64)
+				var absorbance, bx float64
+				if pathlength > 0 {
+					absorbance = 1 - math.Exp(-0.01*pathlength)
+				} else {
+					absorbance = 0
+				}
+				if rhabdom == 0 && absorbance > 0 {
+					bx = 100 * absorbance
+				} else if rhabdom > 0 && absorbance > 0 {
+					bx = 100 * ((1 - tot) * absorbance)
+				}
+				if absorbance == 0 {
+					bx = 0
+				}
+				tot += bx / 100.0
+				bx *= torus
+				if rhabdom < len(rhabdoms) {
+					rhabdoms[rhabdom] += bx
+				}
+				rhabdom++
+			}
+			facet++
 		}
 	}
 	// Write the final line of data
