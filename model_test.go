@@ -241,3 +241,52 @@ func TestCalculateRessensFullMatrix(t *testing.T) {
 		}
 	}
 }
+
+func TestCalculateRessensNephropsWideBlurCircle(t *testing.T) {
+	params := Parameters{
+		SpeciesName:              "test_nephrops_bce18",
+		RhabdomLength:            180,
+		RhabdomWidth:             25,
+		EyeDiameter:              7800,
+		FacetWidth:               50,
+		ApertureDiameter:         3200,
+		CytoplasmRefractiveIndex: 1.34,
+		RhabdomRefractiveIndex:   1.37,
+		BlurCircleExtent:         18,
+		ProximalRhabdomAngle:     0,
+	}
+
+	model := NewModel(params)
+	model.runModel()
+	model.calculateRessens()
+
+	defer os.Remove("test_nephrops_bce18_pathlengths.csv")
+	defer os.Remove("test_nephrops_bce18_summary_res.csv")
+	defer os.Remove("test_nephrops_bce18_summary_sen.csv")
+
+	resBytes, err := os.ReadFile("test_nephrops_bce18_summary_res.csv")
+	if err != nil {
+		t.Fatalf("Failed to read resolution summary file: %v", err)
+	}
+
+	resLines := strings.Split(strings.TrimSpace(string(resBytes)), "\n")
+	if len(resLines) != 11 {
+		t.Fatalf("Expected 11 rows in summary resolution file, got %d", len(resLines))
+	}
+
+	for rowIdx, line := range resLines {
+		parts := strings.Split(line, ",")
+		if len(parts) != 11 {
+			t.Errorf("Row %d: expected 11 columns, got %d", rowIdx, len(parts))
+		}
+		for colIdx, valStr := range parts {
+			val, err := strconv.Atoi(strings.TrimSpace(valStr))
+			if err != nil {
+				t.Errorf("Row %d, Col %d: invalid integer value '%s'", rowIdx, colIdx, valStr)
+			}
+			if val <= 0 {
+				t.Errorf("Row %d, Col %d: expected positive resolution value, got %d", rowIdx, colIdx, val)
+			}
+		}
+	}
+}
