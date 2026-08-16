@@ -117,30 +117,52 @@ The codebase is organized into Go files in a single package:
 
 2. **model.go** - Simulation engine and data structures
    - `Parameters` struct: Holds 10 eye-specific configuration values from CSV
-   - `Model` struct: Contains calculated parameters and simulation state
-   - `NewModel()`: Initializes model from parameters
-   - `initialCalculations()`: Computes derived values (eye radius, critical angle, facet counts, etc.)
-   - `runModel()`: Main simulation loop implementing ray tracing logic
-     - Iterates over pigment combinations (tapetal and shielding)
-     - For each combination, iterates over facets in the eyeshine patch
-     - Calculates light paths through rhabdoms based on angle of incidence
-     - Four main cases: perpendicular ray, no reflection, edge reflection, base bounce
-     - Outputs pathlengths to CSV file (and optional debug file when `-d` is passed)
+   - `Model` struct: Derived optics (ommatidial angle, facet count, critical angle)
+   - `NewModel()`: Validates the parameters and computes the derived optics. Returns
+     an error for any eye that is not physically realisable, rather than letting NaNs
+     propagate into the results
+   - `refractedAngle()`: Empirical corneal refraction regression
+   - `facetTransmission()`: Light a facet admits at a given incidence, as a flux
+     factor in [0, 1]. Applied to absorbed intensity, never to path length
+   - `blurOffset()`: Continuous displacement in rhabdoms of the image formed by a
+     facet, spanning 0 to (BlurCircleExtent - 1) across the eyeshine patch
+   - `traceRay()`: Follows one ray through the rhabdom array. Four cases: axial ray,
+     no reflection, wall reflection, base bounce. Returns raw geometry in µm, the
+     terminating case, and the largest angle reached
+   - `runModel()`: Iterates the 121 pigment states, writes the pathlengths CSV, and
+     returns the per-state summaries. The absorption profile is accumulated as the
+     rays are traced rather than by reading the file back, so the summary does not
+     depend on the output format at all
 
-3. **csv.go** - File I/O and data processing
+3. **csv.go** - File I/O and summary
    - `parseInputParameters()`: Reads CSV parameter file, returns slice of Parameters
-   - `calculateRessens()`: Post-processes pathlengths to calculate resolution and sensitivity
-     - Reads `{species}_pathlengths.csv`
-     - Calculates absorbance, accumulates values across rhabdoms
-     - Outputs `{species}_summary_res.csv` and `{species}_summary_sen.csv`
+   - `ringArea()`: Area of the annulus of rhabdoms at a given offset. Used both to
+     weight contributing facets and to normalise the light arriving at an offset
+   - `deposit()`: Accumulates into a growable profile, so no rhabdom is ever silently
+     dropped
+   - `summariseBlock()`: Turns one block's area-weighted profile into an acceptance
+     angle (FWHM, degrees) and a sensitivity (percent absorbed)
+   - `accumulate()`: Adds one facet's traced ray into the area-weighted absorption
+     profile
+   - `calculateRessens()`: Writes the two summary matrices from the per-state
+     summaries accumulated during the simulation
 
 4. **csv_test.go / model_test.go** - Test suite
-   - `TestParseInputParameters`: Tests CSV parsing with valid, nonexistent, and malformed files
-   - `TestCalculateRessens`: Tests resolution/sensitivity calculation
-   - `TestInitialCalculations`: Tests derived optical calculations
-   - `TestRunModelBlurCircleAndPointyRhabdom`: Tests blur circle shifts and pointy rhabdom behavior
-   - `TestDebugFlagOutput`: Tests optional debug CSV file generation
-   - `TestCalculateRessensFullMatrix`: Tests resolution and sensitivity matrix generation
+   - `TestInitialCalculations`: Derived optical calculations
+   - `TestNewModelRejectsUnphysicalParameters`: Refractive index ordering, aperture
+     against eye diameter, blur circle against facet count
+   - `TestBlurOffsetSpansExtentEvenly`: Blur mapping is uniform and tie-free
+   - `TestRaysStayWithinPhysicalGeometry`: Total path is bounded by
+     2 * RhabdomLength / cos(maxAngle), and no ray exceeds 90 degrees to the axis
+   - `TestPathlengthsAreRawGeometry`: Facet transmission is not folded into geometry
+   - `TestGuidedRayIgnoresScreeningPigment`: Total internal reflection versus the
+     proximal screening pigment
+   - `TestDepositGrowsBeyondFixedArray`: Profile accumulation has no fixed ceiling
+   - `TestSummariseBlockResolution`: Half-maximum interpolation against known profiles
+   - `TestCalculateRessens`: Beer-Lambert absorbance for a single-facet patch
+   - `TestSummaryMatricesAreUsable`: Full matrices are defined, in range, and respond
+     correctly to pigment migration
+   - `TestDebugFlagOutput`: Per-ray debug CSV
 
 ### Data Flow
 
@@ -163,18 +185,58 @@ Each row represents a separate simulation run. Multiple rows can be processed in
 ### Output Files
 
 For each parameter set with species name "X", generates:
-- `X_pathlengths.csv` - Raw pathlength data for each facet/pigment combination
-- `X_summary_res.csv` - Calculated resolution values
-- `X_summary_sen.csv` - Calculated sensitivity values
-- `X_debug.csv` - (Optional, generated with `-d`) Debug information from simulation
+- `X_pathlengths.csv` - Raw ray geometry, in µm: a rectangular CSV with the header
+  `block,shielding_um,tapetal_um,facet,rhabdom,pathlength_um` and one row per rhabdom
+  entered. No block terminator and no positional state
+- `X_summary_res.csv` - Acceptance angle (FWHM of the point spread function), degrees
+- `X_summary_sen.csv` - Incident light absorbed, percent (0-100)
+- `X_debug.csv` - (Optional, generated with `-d`) One row per traced ray
+
+Both summary files are 11x11: **rows vary the shielding (proximal screening) pigment,
+columns vary the tapetal (reflecting) pigment**, each from fully retracted to fully
+covering the rhabdom. A resolution cell reading `NaN` means that state has no
+acceptance angle: it either absorbs no light, or its profile is annular (dips below
+half maximum on the optic axis, so the light forms a ring).
+
+### Compatibility with output from earlier releases
+
+The summary files changed units and format in this version and are **not comparable**
+with earlier output. `summary_res` was the FWHM in centidegrees written as
+`int(200 x half-width)`, and is now the FWHM in degrees; `summary_sen` was a
+truncated integer percentage and is now a float. Dividing an old resolution by 100
+does not recover the new value, because the calculation changed as well: the blur
+circle no longer aliases facets onto whole rhabdom offsets, the point spread function
+is weighted by annulus area, facet transmission attenuates absorbed intensity rather
+than path length, and the profile is no longer truncated at 21 rhabdoms.
+
 
 ## Key Implementation Notes
 
-- The ray tracing simulation handles refraction at the cornea using empirical regression equations for different angle ranges
-- The critical angle for total internal reflection is calculated using Snell's law
-- Pigment migration is simulated by incrementing tapetal and shielding pigment values through the rhabdom length
-- The blur circle feature prepends zero shifts to account for optical aberrations
+- Corneal refraction uses empirical regression equations over four angle ranges
+- Ray angles (`boa`) are measured from the rhabdom axis, so the angle at the wall
+  normal is (90 - boa) and light is guided while `boa < CriticalAngle`, where
+  `CriticalAngle = 90 - asin(n_cytoplasm / n_rhabdom)`
+- Pigment migration is simulated over 11 positions per pigment, giving 121 states
+- The blur circle displaces each facet's image by a **continuous** offset, spanning 0
+  to (BlurCircleExtent - 1) across the eyeshine patch. Light is split between the two
+  whole-rhabdom offsets that bracket it. Quantising this to whole rhabdoms aliases the
+  facets unevenly and cuts notches into the profile that the half-maximum search then
+  locks onto
+- The blur circle extent may not exceed the facet count across the patch
 - Pointy-ended rhabdoms are simulated with the proximal rhabdom acceptance angle offset
+- Rays reaching 90 degrees or more to the rhabdom axis cannot advance towards the
+  proximal end and are discarded with a warning, rather than being folded back by
+  taking absolute values of `tan` and `cos`
+- The absorption coefficient is fixed at 0.01 µm⁻¹ and tapetal reflectance at 1.0
+
+### Known limitation
+
+A trace terminates at the first reflection rather than following the reflected ray
+onward. Because an unreflected ray continues leaking into adjacent rhabdoms and
+absorbing there, extending the tapetum can occasionally shorten the total absorbing
+path and lower the reported sensitivity, by up to about 6 percentage points. A tapetal
+mirror can only add path length in reality, so this is a limitation of the 1995 case
+structure rather than a property of the eye.
 
 ## Dependencies
 
