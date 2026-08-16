@@ -76,20 +76,40 @@ Advances in Marine Biology: The Ecology and Biology of Nephrops norvegicus. Oxfo
 	}
 
 	// --- Loop over each parameter set and run the model ---
+	failed := 0
 	for _, params := range paramsList {
-		model := NewModel(params)
+		model, err := NewModel(params)
+		if err != nil {
+			log.Printf("Skipping %s: %v", params.SpeciesName, err)
+			failed++
+			continue
+		}
 		model.DebugMode = *debugFlag
 
 		fmt.Printf("--- Running simulation for %s ---\n", model.Params.SpeciesName)
+		fmt.Printf("%d facets across the eyeshine patch, ommatidial angle %.4f deg, critical angle %.4f deg\n",
+			model.NumberOfFacets, model.OmmatidialAngle, model.CriticalAngle)
 
 		// --- Run Simulation & Calculate Results ---
 		fmt.Printf("Calculating pathlengths for %s...\n", model.Params.SpeciesName)
-		model.runModel()
+		summaries, err := model.runModel()
+		if err != nil {
+			log.Printf("Simulation for %s failed: %v", model.Params.SpeciesName, err)
+			failed++
+			continue
+		}
 
-		model.calculateRessens()
+		if err := model.calculateRessens(summaries); err != nil {
+			log.Printf("Summary for %s failed: %v", model.Params.SpeciesName, err)
+			failed++
+			continue
+		}
 
 		fmt.Printf("--- Finished simulation for %s ---\n\n", model.Params.SpeciesName)
 	}
 
+	if failed > 0 {
+		log.Fatalf("%d of %d parameter sets could not be simulated.", failed, len(paramsList))
+	}
 	fmt.Println("All simulations complete.")
 }
