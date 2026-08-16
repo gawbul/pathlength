@@ -226,9 +226,6 @@ func (m *Model) runModel() {
 						var val float64
 						x := m.RhabdomRadius / math.Abs(math.Sin(boa*degToRadConv))
 						z := (rhabdomLength - y) / math.Abs(math.Cos(boa*degToRadConv))
-						if z > x {
-							z = x
-						}
 						v := m.OldRhabdomLength / math.Abs(math.Cos(boa*degToRadConv))
 						if m.TapetalPigment == 0 {
 							val = (x + z) * facetNum
