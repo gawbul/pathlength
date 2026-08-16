@@ -354,13 +354,22 @@ over the same range.
 | `summary_res` | Acceptance angle: FWHM of the point spread function | degrees |
 | `summary_sen` | Incident light absorbed, area-weighted over the eyeshine patch | percent (0–100) |
 
-A resolution cell reading `NaN` means the profile never falls to half its maximum,
-so the acceptance angle is undefined for that pigment state.
+A resolution cell reading `NaN` means that pigment state has no acceptance angle:
+either it absorbs no light at all, or its profile is **annular** — the light forms a
+ring, dipping below half its maximum on the optic axis, so the region above half
+maximum is a band that does not contain the axis. Reporting the ring's thickness
+there would read as an implausibly sharp eye, so the width is left undefined and a
+warning is printed.
 
 The point spread function is the light arriving at each whole-rhabdom offset from the
 optic axis, divided by the area of the annulus it is spread over. Facets are weighted
 by their own source annulus, since the number of ommatidia at a given radius in the
 eyeshine patch grows with that radius.
+
+The angular sensitivity function is even about the optic axis — offset *j* stands for
+both *+j* and *−j* — so the acceptance angle is twice the radius at which it first
+falls below half its maximum, measured **from the axis**. Measuring from the profile's
+peak would understate a flat-topped profile by the peak's own offset.
 
 ## Model notes
 
@@ -379,6 +388,10 @@ eyeshine patch grows with that radius.
 * **Parameter validation.** Parameter sets that cannot describe a physically
   realisable eye are rejected with a diagnostic and skipped, rather than being
   allowed to produce NaNs that silently disable the total-internal-reflection test.
+  Every numeric parameter must be finite: the float parsers accept `NaN` and `Inf`,
+  and every ordered comparison against `NaN` is false, so a non-finite value would
+  otherwise slip past every range check and reappear as an undefined critical angle
+  or blur offset.
 
 ### Known limitation
 

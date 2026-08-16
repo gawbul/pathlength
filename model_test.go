@@ -86,6 +86,17 @@ func TestNewModelRejectsUnphysicalParameters(t *testing.T) {
 		{"ZeroRhabdomLength", func(p *Parameters) { p.RhabdomLength = 0 }, "rhabdom length"},
 		{"NegativeFacetWidth", func(p *Parameters) { p.FacetWidth = -50 }, "facet width"},
 		{"BlurCircleBelowOne", func(p *Parameters) { p.BlurCircleExtent = 0 }, "blur circle extent"},
+		// strconv.ParseFloat accepts "NaN" and "Inf", and every ordered comparison
+		// against NaN is false, so these used to slip past every range check below and
+		// produce plausible-looking output: a NaN cytoplasm index gave a NaN critical
+		// angle and 83% sensitivity with no warning at all.
+		{"NaNBlurCircle", func(p *Parameters) { p.BlurCircleExtent = math.NaN() }, "must be a finite number"},
+		{"NaNCytoplasmIndex", func(p *Parameters) { p.CytoplasmRefractiveIndex = math.NaN() }, "must be a finite number"},
+		{"NaNProximalAngle", func(p *Parameters) { p.ProximalRhabdomAngle = math.NaN() }, "must be a finite number"},
+		{"InfRhabdomLength", func(p *Parameters) { p.RhabdomLength = math.Inf(1) }, "must be a finite number"},
+		{"InfRhabdomIndex", func(p *Parameters) { p.RhabdomRefractiveIndex = math.Inf(1) }, "must be a finite number"},
+		{"InfProximalAngle", func(p *Parameters) { p.ProximalRhabdomAngle = math.Inf(1) }, "must be a finite number"},
+		{"NegInfEyeDiameter", func(p *Parameters) { p.EyeDiameter = math.Inf(-1) }, "must be a finite number"},
 		// astacodes ships with an 18-rhabdom blur circle but only 7 facets across the
 		// eyeshine patch, which leaves 11 rhabdom offsets receiving no light at all.
 		{"BlurCircleExceedsFacets", func(p *Parameters) {

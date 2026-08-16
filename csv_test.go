@@ -166,6 +166,51 @@ func TestSummariseBlockResolution(t *testing.T) {
 			t.Errorf("Expected zero sensitivity for an empty profile, got %f", got.SensitivityPercent)
 		}
 	})
+
+	// The angular sensitivity function is even about the optic axis, so its width is
+	// measured from the axis. Measuring from the peak understates a flat-topped
+	// profile by the peak's own offset: here the light is above half maximum out to
+	// radius 2.828, so the full width is 5.657 ommatidial angles, not 3.657.
+	t.Run("FlatTopWithOffAxisPeakMeasuredFromTheAxis", func(t *testing.T) {
+		psf := []float64{0.99, 1.0, 0.98, 0.4, 0}
+		weighted := make([]float64, len(psf))
+		for j, v := range psf {
+			weighted[j] = v * ringArea(j)
+		}
+		got := model.summariseBlock(weighted)
+		if got.PeakOffset != 1 {
+			t.Fatalf("Expected the peak at offset 1, got %d", got.PeakOffset)
+		}
+		if got.Annular {
+			t.Error("A profile at maximum on the axis is not annular")
+		}
+		want := 2.0 * 2.8275862068965516 * model.OmmatidialAngle
+		if math.Abs(got.FWHMDegrees-want) > 1e-9 {
+			t.Errorf("Expected FWHM %.6f deg measured from the axis, got %.6f", want, got.FWHMDegrees)
+		}
+	})
+
+	// A profile that dips below half maximum on the axis is a ring. Its supra-half
+	// region does not contain the axis, so there is no acceptance angle: reporting the
+	// ring's thickness instead would read as an implausibly sharp eye.
+	t.Run("AnnularProfileHasNoAcceptanceAngle", func(t *testing.T) {
+		psf := []float64{0.2, 0.6, 1.0, 0.6, 0.2, 0}
+		weighted := make([]float64, len(psf))
+		for j, v := range psf {
+			weighted[j] = v * ringArea(j)
+		}
+		got := model.summariseBlock(weighted)
+		if !got.Annular {
+			t.Error("Expected the profile to be flagged as annular")
+		}
+		if !math.IsNaN(got.FWHMDegrees) {
+			t.Errorf("Expected an undefined FWHM for an annular profile, got %f", got.FWHMDegrees)
+		}
+		// Sensitivity is independent of the resolution classification.
+		if got.SensitivityPercent <= 0 {
+			t.Errorf("Expected sensitivity to still be reported, got %f", got.SensitivityPercent)
+		}
+	})
 }
 
 // singleFacetModel is an eye whose eyeshine patch spans exactly one facet, so the

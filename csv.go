@@ -49,14 +49,17 @@ func deposit(dst []float64, offset int, amount float64) []float64 {
 
 // blockSummary holds the resolution and sensitivity derived from one pigment block.
 type blockSummary struct {
-	// FWHM of the point spread function, in degrees. NaN when the profile never
-	// falls to half of its maximum, in which case the acceptance angle is undefined.
+	// FWHMDegrees is the acceptance angle: the full width at half maximum of the
+	// angular sensitivity function, in degrees. NaN when the profile carries no light
+	// or is annular, in which case there is no acceptance angle to report.
 	FWHMDegrees float64
 	// Percentage of incident light absorbed, averaged over the eyeshine patch (0-100).
 	SensitivityPercent float64
-	// PeakOffset is the rhabdom offset carrying the most light. A non-zero value means
-	// the profile is annular and its FWHM is not a simple acceptance angle.
+	// PeakOffset is the rhabdom offset carrying the most light.
 	PeakOffset int
+	// Annular is set when the profile dips below half its maximum on the optic axis,
+	// so the light forms a ring rather than a central spot.
+	Annular bool
 }
 
 // summariseBlock converts one block's area-weighted absorption profile into
@@ -105,14 +108,24 @@ func (m *Model) summariseBlock(rhabdoms []float64) blockSummary {
 	}
 	half := psf[peak] / 2.0
 
-	// Walk outwards from the peak to the first crossing of the half-maximum and
-	// interpolate linearly between the bracketing offsets.
-	for i := peak; i < len(psf)-1; i++ {
+	// A profile that is already below half its maximum on the optic axis is annular:
+	// the light forms a ring, and the region above half maximum is a band that does
+	// not contain the axis. There is no acceptance angle to report, so the width is
+	// left undefined rather than substituting the ring's thickness for it.
+	if psf[0] < half {
+		out.Annular = true
+		return out
+	}
+
+	// The angular sensitivity function is even about the optic axis - offset j stands
+	// for both +j and -j - so its full width at half maximum is twice the radius at
+	// which it first falls below half. That radius is measured from the axis, not from
+	// the peak: on a flat-topped profile whose maximum sits slightly off-axis,
+	// measuring from the peak would understate the width by the peak's own offset.
+	for i := 0; i < len(psf)-1; i++ {
 		if psf[i] >= half && psf[i+1] < half {
 			frac := (psf[i] - half) / (psf[i] - psf[i+1])
-			crossing := float64(i) + frac
-			hwhm := (crossing - float64(peak)) * m.OmmatidialAngle
-			out.FWHMDegrees = 2.0 * hwhm
+			out.FWHMDegrees = 2.0 * (float64(i) + frac) * m.OmmatidialAngle
 			break
 		}
 	}
@@ -171,22 +184,23 @@ func (m *Model) calculateRessens(summaries []blockSummary) error {
 		return err
 	}
 
-	undefined, annular := 0, 0
+	dark, annular := 0, 0
 	for _, s := range summaries {
-		if math.IsNaN(s.FWHMDegrees) {
-			undefined++
-		}
-		if s.PeakOffset != 0 {
+		switch {
+		case s.Annular:
 			annular++
+		case math.IsNaN(s.FWHMDegrees):
+			dark++
 		}
-	}
-	if undefined > 0 {
-		fmt.Printf("WARNING: %d of %d blocks have no half-maximum crossing; their resolution is reported as NaN.\n",
-			undefined, len(summaries))
 	}
 	if annular > 0 {
-		fmt.Printf("WARNING: %d of %d blocks peak away from the optic axis (annular profile); "+
-			"their FWHM is not a simple acceptance angle.\n", annular, len(summaries))
+		fmt.Printf("WARNING: %d of %d pigment states have an annular profile, with the light "+
+			"forming a ring rather than a central spot; they have no acceptance angle and are "+
+			"reported as NaN.\n", annular, len(summaries))
+	}
+	if dark > 0 {
+		fmt.Printf("WARNING: %d of %d pigment states absorb no light; their resolution is "+
+			"reported as NaN.\n", dark, len(summaries))
 	}
 	return nil
 }

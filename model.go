@@ -75,6 +75,30 @@ func validateParameters(p Parameters) error {
 	if strings.TrimSpace(p.SpeciesName) == "" {
 		return fmt.Errorf("species name is required")
 	}
+	// Reject non-finite values before any range check. strconv.ParseFloat accepts
+	// "NaN" and "Inf", and every ordered comparison against NaN is false, so a NaN
+	// would slip past the constraints below and reappear as an undefined critical
+	// angle or blur offset - reproducing the very silent failures the range checks
+	// exist to prevent.
+	for _, c := range []struct {
+		name string
+		v    float64
+	}{
+		{"rhabdom length", p.RhabdomLength},
+		{"rhabdom width", p.RhabdomWidth},
+		{"eye diameter", p.EyeDiameter},
+		{"facet width", p.FacetWidth},
+		{"aperture diameter", p.ApertureDiameter},
+		{"cytoplasm refractive index", p.CytoplasmRefractiveIndex},
+		{"rhabdom refractive index", p.RhabdomRefractiveIndex},
+		{"blur circle extent", p.BlurCircleExtent},
+		{"proximal rhabdom angle", p.ProximalRhabdomAngle},
+	} {
+		if math.IsNaN(c.v) || math.IsInf(c.v, 0) {
+			return fmt.Errorf("%s must be a finite number, got %g", c.name, c.v)
+		}
+	}
+
 	for _, c := range []struct {
 		name string
 		v    float64
@@ -85,7 +109,7 @@ func validateParameters(p Parameters) error {
 		{"facet width", p.FacetWidth},
 		{"aperture diameter", p.ApertureDiameter},
 	} {
-		if !(c.v > 0) {
+		if c.v <= 0 {
 			return fmt.Errorf("%s must be greater than 0 um, got %g", c.name, c.v)
 		}
 	}
