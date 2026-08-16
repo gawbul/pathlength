@@ -326,7 +326,7 @@ genus	= A prefix for the output filenames e.g. organism genus name (lowercase al
 The following output files are created:
 
 * `genus_pathlengths.csv` - Raw ray geometry for each facet and pigment combination
-* `genus_summary_res.csv` - Acceptance angle matrix
+* `genus_summary_res.csv` - Resolution (acceptance angle) matrix
 * `genus_summary_sen.csv` - Sensitivity matrix
 * `genus_debug.csv` - (Optional) Per-ray trace, enabled with `-d`
 
