@@ -107,28 +107,37 @@ Outputs:
 
 ```bash
 === RUN   TestParseInputParameters
-=== RUN   TestParseInputParameters/ValidFile
-=== RUN   TestParseInputParameters/NonExistentFile
-=== RUN   TestParseInputParameters/MalformedFile
-2026/08/15 13:06:29 Skipping malformed record on line 2: record on line 2: wrong number of fields
 --- PASS: TestParseInputParameters (0.00s)
-    --- PASS: TestParseInputParameters/ValidFile (0.00s)
-    --- PASS: TestParseInputParameters/NonExistentFile (0.00s)
-    --- PASS: TestParseInputParameters/MalformedFile (0.00s)
-=== RUN   TestCalculateRessens
+=== RUN   TestDepositGrowsBeyondFixedArray
+--- PASS: TestDepositGrowsBeyondFixedArray (0.00s)
+=== RUN   TestSummariseBlockResolution
+--- PASS: TestSummariseBlockResolution (0.00s)
+=== RUN   TestAccumulateAndSummarise
+--- PASS: TestAccumulateAndSummarise (0.00s)
+=== RUN   TestCalculateRessensWritesMatrices
 INFO: Calculating resolution and sensitivity...
---- PASS: TestCalculateRessens (0.00s)
+--- PASS: TestCalculateRessensWritesMatrices (0.00s)
+=== RUN   TestSummaryMatricesAreUsable
+INFO: Calculating resolution and sensitivity...
+--- PASS: TestSummaryMatricesAreUsable (0.01s)
 === RUN   TestInitialCalculations
 --- PASS: TestInitialCalculations (0.00s)
-=== RUN   TestRunModelBlurCircleAndPointyRhabdom
---- PASS: TestRunModelBlurCircleAndPointyRhabdom (0.01s)
+=== RUN   TestNewModelRejectsUnphysicalParameters
+--- PASS: TestNewModelRejectsUnphysicalParameters (0.00s)
+=== RUN   TestBlurOffsetSpansExtentEvenly
+--- PASS: TestBlurOffsetSpansExtentEvenly (0.00s)
+=== RUN   TestRaysStayWithinPhysicalGeometry
+--- PASS: TestRaysStayWithinPhysicalGeometry (0.00s)
+=== RUN   TestPathlengthsAreRawGeometry
+--- PASS: TestPathlengthsAreRawGeometry (0.00s)
+=== RUN   TestGuidedRayIgnoresScreeningPigment
+--- PASS: TestGuidedRayIgnoresScreeningPigment (0.00s)
+=== RUN   TestRunModelProducesWellFormedBlocks
+--- PASS: TestRunModelProducesWellFormedBlocks (0.01s)
 === RUN   TestDebugFlagOutput
---- PASS: TestDebugFlagOutput (0.00s)
-=== RUN   TestCalculateRessensFullMatrix
-INFO: Calculating resolution and sensitivity...
---- PASS: TestCalculateRessensFullMatrix (0.00s)
+--- PASS: TestDebugFlagOutput (0.01s)
 PASS
-ok  	pathlength	0.215s
+ok  	pathlength	0.305s
 ```
 
 ### Build the program
@@ -224,47 +233,61 @@ Outputs:
 ```bash
 Parsing input parameters from example_data/acanthephyra_parameters.txt...
 --- Running simulation for acanthephyra ---
+20 facets across the eyeshine patch, ommatidial angle 1.0396 deg, critical angle 12.0125 deg
 Calculating pathlengths for acanthephyra...
-P: 0.00, T: 0.00
-P: 0.00, T: 12.70
-P: 0.00, T: 25.40
-P: 0.00, T: 38.10
-P: 0.00, T: 50.80
-P: 0.00, T: 63.50
-P: 0.00, T: 76.20
-P: 0.00, T: 88.90
-P: 0.00, T: 101.60
-P: 0.00, T: 114.30
-P: 0.00, T: 127.00
-P: 12.70, T: 0.00
-P: 12.70, T: 12.70
-P: 12.70, T: 25.40
-P: 12.70, T: 38.10
-...
-P: 127.00, T: 101.60
-P: 127.00, T: 114.30
-P: 127.00, T: 127.00
 INFO: Calculating resolution and sensitivity...
 --- Finished simulation for acanthephyra ---
 
 --- Running simulation for acanthephyra_bce3 ---
+20 facets across the eyeshine patch, ommatidial angle 1.0396 deg, critical angle 12.0125 deg
 Calculating pathlengths for acanthephyra_bce3...
-...
 INFO: Calculating resolution and sensitivity...
 --- Finished simulation for acanthephyra_bce3 ---
 
 --- Running simulation for acanthephyra_bce6 ---
+20 facets across the eyeshine patch, ommatidial angle 1.0396 deg, critical angle 12.0125 deg
 Calculating pathlengths for acanthephyra_bce6...
-...
 INFO: Calculating resolution and sensitivity...
 --- Finished simulation for acanthephyra_bce6 ---
 
 All simulations complete.
 ```
 
+A parameter set that cannot describe a physically realisable eye is reported and
+skipped, and the run ends with a non-zero exit status if any set was skipped. Runs
+that complete may still print warnings about the simulation itself:
+
+```bash
+./pathlength -f example_data/astacodes_parameters.txt
+```
+
+Outputs:
+
+```bash
+Parsing input parameters from example_data/astacodes_parameters.txt...
+--- Running simulation for astacodes ---
+7 facets across the eyeshine patch, ommatidial angle 4.1201 deg, critical angle 12.0125 deg
+Calculating pathlengths for astacodes...
+WARNING: 9 of 847 rays exceeded 90 degrees to the rhabdom axis and were discarded.
+INFO: Calculating resolution and sensitivity...
+--- Finished simulation for astacodes ---
+
+All simulations complete.
+```
+
+The warnings that can appear are:
+
+| Warning | Meaning |
+| --- | --- |
+| `N of M rays exceeded 90 degrees to the rhabdom axis` | Those rays can no longer advance towards the proximal end and were discarded. They contribute whatever path they had already accumulated. |
+| `N of M pigment states have an annular profile` | The light forms a ring rather than a central spot, so those states have no acceptance angle and are reported as `NaN`. |
+| `N of M pigment states absorb no light` | Their resolution is reported as `NaN`. |
+
 ### Run with debug output
 
-To generate optional `{species}_debug.csv` files containing simulation debug logs (e.g. pigment migration steps):
+To generate an optional `{species}_debug.csv` recording one row per traced ray - its
+angle of incidence, refracted angle, blur offset, entry angle, facet transmission,
+terminating case and the path lengths it accumulated:
 
 ```bash
 ./pathlength -f example_data/acanthephyra_parameters.txt -d
@@ -370,6 +393,25 @@ The angular sensitivity function is even about the optic axis — offset *j* sta
 both *+j* and *−j* — so the acceptance angle is twice the radius at which it first
 falls below half its maximum, measured **from the axis**. Measuring from the profile's
 peak would understate a flat-topped profile by the peak's own offset.
+
+### Compatibility with output from earlier releases
+
+The summary files changed both units and format in this version, and the values are
+**not comparable** with those produced by earlier releases.
+
+| File | Earlier releases | Now |
+| --- | --- | --- |
+| `summary_res` | FWHM in **centidegrees**, written as `int(200 × half-width)` | FWHM in **degrees**, to 4 decimal places |
+| `summary_sen` | Percent absorbed, truncated to an integer | Percent absorbed, to 4 decimal places |
+| `pathlengths` | Blocks of positional lines closed by `999`, with facet transmission already folded into every value | Rectangular CSV with a header; raw geometry |
+
+Dividing an old resolution by 100 does **not** recover the new value. The calculation
+itself changed: the blur circle no longer aliases facets onto whole rhabdom offsets,
+the point spread function is weighted by annulus area, facet transmission attenuates
+absorbed intensity rather than path length, and the profile is no longer truncated at
+21 rhabdoms. For *Nephrops norvegicus* flat lateral, dark-adapted, earlier releases
+reported `833` and `78`; rescaling those gives 8.33° and 78%, against 9.58° and
+83.03% now.
 
 ## Model notes
 
