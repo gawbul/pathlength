@@ -302,16 +302,92 @@ genus	= A prefix for the output filenames e.g. organism genus name (lowercase al
 
 The following output files are created:
 
-* `genus_pathlengths.csv` - Raw pathlength data for each facet/pigment combination
-* `genus_summary_res.csv` - Calculated resolution summary
-* `genus_summary_sen.csv` - Calculated sensitivity summary
-* `genus_debug.csv` - (Optional) Debug information from simulation, enabled with `-d`
+* `genus_pathlengths.csv` - Raw ray geometry for each facet and pigment combination
+* `genus_summary_res.csv` - Acceptance angle matrix
+* `genus_summary_sen.csv` - Sensitivity matrix
+* `genus_debug.csv` - (Optional) Per-ray trace, enabled with `-d`
 
-The pathlengths file contains multiple rows for each facet with the various combinations of tapetal and shielding pigment lengths in the adjacent columns and then multiple columns with the pathlengths.
+### `genus_pathlengths.csv`
 
-The summary resolution file contains the calculated resolution values.
+A plain rectangular CSV with a header row and one row per rhabdom entered. Every row
+carries its own keys, so there is no positional state and no block terminator:
 
-The summary sensitivity file contains the calculated sensitivity values.
+```csv
+block,shielding_um,tapetal_um,facet,rhabdom,pathlength_um
+0,0.000000,0.000000,0,0,180.000000
+0,0.000000,0.000000,1,0,180.032715
+...
+0,0.000000,0.000000,12,0,55.332562
+0,0.000000,0.000000,12,1,52.437957
+```
+
+| Column | Meaning |
+| --- | --- |
+| `block` | Pigment state, 0–120 |
+| `shielding_um` | Shielding (proximal screening) pigment position, µm |
+| `tapetal_um` | Tapetal (reflecting) pigment position, µm |
+| `facet` | Facet index across the eyeshine patch, 0 at the optic axis |
+| `rhabdom` | Which rhabdom along that ray, 0 being the one it enters first |
+| `pathlength_um` | Path length through that rhabdom, µm |
+
+The path lengths are **raw geometry**: facet transmission is a flux factor and is
+applied when the absorbed intensity is computed, not folded into the path length. A
+ray that stopped propagating still contributes one row, with a path length of zero,
+so every facet is accounted for.
+
+The summary is accumulated as the rays are traced rather than by reading this file
+back, so it is purely an output artefact and can be loaded directly:
+
+```python
+df = pd.read_csv("nephropsfl_pathlengths.csv")
+df.groupby(["block", "facet"]).pathlength_um.sum()
+```
+
+### `genus_summary_res.csv` and `genus_summary_sen.csv`
+
+Both are 11×11 matrices. **Rows vary the shielding pigment** from fully retracted
+(row 0) to fully covering the rhabdom (row 10); **columns vary the tapetal pigment**
+over the same range.
+
+| File | Quantity | Units |
+| --- | --- | --- |
+| `summary_res` | Acceptance angle: FWHM of the point spread function | degrees |
+| `summary_sen` | Incident light absorbed, area-weighted over the eyeshine patch | percent (0–100) |
+
+A resolution cell reading `NaN` means the profile never falls to half its maximum,
+so the acceptance angle is undefined for that pigment state.
+
+The point spread function is the light arriving at each whole-rhabdom offset from the
+optic axis, divided by the area of the annulus it is spread over. Facets are weighted
+by their own source annulus, since the number of ommatidia at a given radius in the
+eyeshine patch grows with that radius.
+
+## Model notes
+
+* **Blur circle extent** is the width of the blur circle in rhabdoms. 1 is a perfect
+  point focus; the outermost facet is displaced by (extent − 1) rhabdoms. It may not
+  exceed the number of facets across the eyeshine patch, since the light would
+  otherwise have to fill rhabdom offsets that no facet reaches.
+* **Critical angle.** Ray angles (`boa`) are measured from the rhabdom axis, so the
+  angle at the wall normal is (90° − boa) and light is guided while
+  `boa < 90° − asin(n_cytoplasm / n_rhabdom)`.
+* **Absorption coefficient** is fixed at 0.01 µm⁻¹ in the Beer-Lambert absorbance
+  `1 − exp(−kL)`. Reported values for crustacean rhabdoms span roughly
+  0.0067–0.01 µm⁻¹.
+* **Tapetal reflectance** is implicitly 1.0: the return path is added at full length
+  with no loss term.
+* **Parameter validation.** Parameter sets that cannot describe a physically
+  realisable eye are rejected with a diagnostic and skipped, rather than being
+  allowed to produce NaNs that silently disable the total-internal-reflection test.
+
+### Known limitation
+
+A trace terminates at the first reflection rather than following the reflected ray
+onward. Because a ray that is *not* reflected continues leaking into adjacent
+rhabdoms and absorbing there, extending the tapetum can occasionally shorten the
+total absorbing path and so lower the reported sensitivity, by up to about 6
+percentage points. A tapetal mirror can only add path length in reality, so this is a
+limitation of the 1995 case structure rather than a property of the eye.
 
 ## Citation
 
